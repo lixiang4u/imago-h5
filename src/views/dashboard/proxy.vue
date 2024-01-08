@@ -1,36 +1,19 @@
 <template>
   <div>
+    <div class="m-card m-card-title">
+      <div>代理列表</div>
+      <n-button strong secondary type="success">创建代理</n-button>
+    </div>
     <div class="m-card">
-
       <n-space vertical :size="12">
         <n-data-table
             :bordered="false"
             :single-line="false"
             :columns="columns"
             :data="data"
-            :pagination="pagination"
-        />
-        <n-data-table
-            :bordered="false"
-            :columns="columns"
-            :data="data"
-            :pagination="pagination"
-        />
-        <n-data-table
-            :bordered="false"
-            :single-line="false"
-            single-column
-            :columns="columns"
-            :data="data"
-            :pagination="pagination"
-        />
+            :pagination="pagination"/>
       </n-space>
-
-
     </div>
-
-    <div class="m-card">AAA</div>
-
   </div>
 </template>
 
@@ -41,83 +24,96 @@ import {NButton, NDataTable, NSpace, NTag, useMessage} from "naive-ui";
 const createColumns = ({sendMail}) => {
   return [
     {
-      title: "Name",
-      key: "name"
+      title: "序号",
+      key: "id"
     },
     {
-      title: "Age",
-      key: "age"
+      title: "名称",
+      key: "title"
     },
     {
-      title: "Address",
-      key: "address"
+      title: "主机",
+      key: "host"
     },
     {
-      title: "Tags",
-      key: "tags",
-      render(row) {
-        const tags = row.tags.map((tagKey) => {
-          return h(
-              NTag,
-              {
-                style: {
-                  marginRight: "6px"
-                },
-                type: "info",
-                bordered: false
-              },
-              {
-                default: () => tagKey
-              }
-          );
-        });
-        return tags;
-      }
+      title: "源",
+      key: "origin"
     },
     {
-      title: "Action",
-      key: "actions",
-      render(row) {
-        return h(
-            NButton,
-            {
-              size: "small",
-              onClick: () => sendMail(row)
-            },
-            {default: () => "Send Email"}
-        );
-      }
-    }
+      title: "状态",
+      key: "status"
+    },
+    {
+      title: "创建时间",
+      key: "created_at"
+    },
+
+    // {
+    //   title: "Tags",
+    //   key: "tags",
+    //   render(row) {
+    //     const tags = row.tags.map((tagKey) => {
+    //       return h(
+    //           NTag,
+    //           {
+    //             style: {
+    //               marginRight: "6px"
+    //             },
+    //             type: "info",
+    //             bordered: false
+    //           },
+    //           {
+    //             default: () => tagKey
+    //           }
+    //       );
+    //     });
+    //     return tags;
+    //   }
+    // },
+    // {
+    //   title: "Action",
+    //   key: "actions",
+    //   render(row) {
+    //     return h(
+    //         NButton,
+    //         {
+    //           size: "small",
+    //           onClick: () => sendMail(row)
+    //         },
+    //         {default: () => "Send Email"}
+    //     );
+    //   }
+    // }
   ];
 };
 
 const createData = () => [
-  {
-    key: 0,
-    name: "John Brown",
-    age: 32,
-    address: "New York No. 1 Lake Park",
-    tags: ["nice", "developer"]
-  },
-  {
-    key: 1,
-    name: "Jim Green",
-    age: 42,
-    address: "London No. 1 Lake Park",
-    tags: ["wow"]
-  },
-  {
-    key: 2,
-    name: "Joe Black",
-    age: 32,
-    address: "Sidney No. 1 Lake Park",
-    tags: ["cool", "teacher"]
-  }
+  // {
+  //   key: 0,
+  //   name: "John Brown",
+  //   age: 32,
+  //   address: "New York No. 1 Lake Park",
+  //   tags: ["nice", "developer"]
+  // },
+  // {
+  //   key: 1,
+  //   name: "Jim Green",
+  //   age: 42,
+  //   address: "London No. 1 Lake Park",
+  //   tags: ["wow"]
+  // },
+  // {
+  //   key: 2,
+  //   name: "Joe Black",
+  //   age: 32,
+  //   address: "Sidney No. 1 Lake Park",
+  //   tags: ["cool", "teacher"]
+  // }
 ];
 
 export default defineComponent({
   components: {
-    NSpace, NDataTable
+    NSpace, NDataTable, NButton
   },
   setup() {
     const message = useMessage();
@@ -147,6 +143,15 @@ export default defineComponent({
 
 .table {
   line-height: 200%;
+}
+
+.m-card-title {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 120%;
+  font-weight: 600;
 }
 
 </style>
