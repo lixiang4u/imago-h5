@@ -19,7 +19,9 @@ request.interceptors.response.use(resp => {
     if (resp.data.code === 200) {
         return resp
     }
-    return Promise.reject(resp.data)
+    // 兼容默认错误
+    const d = {message: resp.data.msg ?? null, debug: resp}
+    return Promise.reject(d)
 }, error => {
     return Promise.reject(error)
 })

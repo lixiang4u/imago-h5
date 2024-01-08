@@ -1,14 +1,14 @@
 <template>
   <div>
-    <n-form class="form" ref="formRef" :model="formRef" :rules="rules">
+    <n-form class="form" ref="formRef" :model="modelValue" :rules="rules">
       <n-form-item class="form-item" path="email" label="邮箱">
-        <n-input v-model:value="formRef.email" type="text" placeholder="请输入用户名或邮箱地址"/>
+        <n-input v-model:value="modelValue.email" type="text" placeholder="请输入用户名或邮箱地址"/>
       </n-form-item>
       <n-form-item class="form-item" path="password" label="密码">
-        <n-input v-model:value="formRef.password" type="password" placeholder="请输入密码"/>
+        <n-input v-model:value="modelValue.password" type="password" placeholder="请输入密码"/>
       </n-form-item>
       <n-form-item class="form-item" path="password2" label="再次输入密码">
-        <n-input v-model:value="formRef.password2" type="password" placeholder="请重新输入密码"/>
+        <n-input v-model:value="modelValue.password2" type="password" placeholder="请重新输入密码"/>
       </n-form-item>
       <div class="form-item">
         <n-button type="primary" class="login-btn" @click="handleLoginClick">注册</n-button>
@@ -29,8 +29,11 @@ import {defineComponent, ref} from "vue";
 import api from "@/api/index.js";
 import ErrorFilled from '@vicons/material/ErrorFilled'
 import ModalTipsComponent from '@/components/ModalTipsComponent.vue'
+import {useRouter} from 'vue-router'
 
-const formRef = ref({
+let router = null
+const formRef = ref({})
+const modelValue = ref({
   email: null,
   password: null,
   password2: null,
@@ -58,10 +61,10 @@ const rules = {
   password2: [{
     required: true,
     validator(rule, value) {
-      if (!formRef.value.password2) {
+      if (!modelValue.value.password2) {
         return new Error('密码不能为空');
       }
-      if (formRef.value.password !== formRef.value.password2) {
+      if (modelValue.value.password !== modelValue.value.password2) {
         return new Error('两次输入密码不同');
       }
       return true;
@@ -72,32 +75,25 @@ const rules = {
 const modalTipsRef = ref(null)
 
 const handleLoginClick = (e) => {
-
-  console.log('[handleLoginClick]', modalTipsRef.value)
-  modalTipsRef.value.showError({title:'xxxx','message':'xxxxxDDD'})
-
-  e.preventDefault();
   formRef.value?.validate((error) => {
-    console.log('[error]',error)
     if (error) {
-      modalTipsRef.value.showError({'message':error[0][0].message??'表单输入错误'})
+      modalTipsRef.value.showError({'message': error[0][0].message ?? '表单输入错误'})
       return
     }
 
-    loginRequest(formRef.value)
+    const data = {nickname: '', email: modelValue.value.email, password: modelValue.value.password,}
+    api.UserRegister(data).then(resp => {
+      modalTipsRef.value.showSuccess({'message': '注册成功，即将跳转登录'})
+      setTimeout(() => {
+        router.push('/login?email=' + data.email)
+      }, 3e3)
+    }).catch(error => {
+      console.log('[xxx]', error)
+      modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+    }).finally(() => {
+    })
 
   })
-}
-
-const loginRequest = (data) => {
-  api.UserRegister(data).then(resp => {
-    console.log('[resp]', resp)
-  }).catch(error => {
-    console.log('[error]', error)
-    // message
-  }).finally(() => {
-    console.log('[finally]')
-  });
 }
 
 export default defineComponent({
@@ -106,9 +102,12 @@ export default defineComponent({
     ModalTipsComponent,
   },
   setup() {
+    router = useRouter()
+
     return {
-      formRef,
       modalTipsRef,
+      formRef,
+      modelValue,
       rules,
       handleLoginClick,
       ErrorFilled,
