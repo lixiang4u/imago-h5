@@ -2,21 +2,24 @@ export default {
     setAccessToken(token) {
         localStorage.setItem('access-token', token)
     },
-    getAccessToken(token) {
+    getAccessToken() {
         return localStorage.getItem('access-token')
     },
 
     setRefreshToken(token) {
         localStorage.setItem('refresh-token', token)
     },
-    getRefreshToken(token) {
+    getRefreshToken() {
         return localStorage.getItem('refresh-token')
     },
 
     setNickname(token) {
         localStorage.setItem('user-nickname', token)
     },
-    getNickname(token) {
+    getNickname() {
         return localStorage.getItem('user-nickname')
+    },
+    clear() {
+        return localStorage.clear()
     },
 }

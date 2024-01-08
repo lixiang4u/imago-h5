@@ -6,6 +6,9 @@ export default {
     },
     UserLogin: (data) => {
         return request.post('/user/login', data)
-    }
+    },
+    CreateProxy: (data) => {
+        return request.post('/user/proxy', data)
+    },
 
 }

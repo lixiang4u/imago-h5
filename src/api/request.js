@@ -1,4 +1,5 @@
 import axios from "axios";
+import localStorage from '@/utils/localstorage.js'
 
 const request = axios.create({
     baseURL: import.meta.env.VITE_BASE_URL,
@@ -6,8 +7,8 @@ const request = axios.create({
 })
 
 request.interceptors.request.use(value => {
-    if (!value.headers['x-token']) {
-        value.headers['x-token'] = localStorage.getItem('x-token')
+    if (!value.headers['Authorization']) {
+        value.headers['Authorization'] = 'Bearer ' + localStorage.getAccessToken()
     }
     return value
 }, error => {

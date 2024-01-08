@@ -6,11 +6,30 @@
     <div class="flex flex-row">
       <div>imago-service@github.com</div>
       <span class="split">|</span>
-      <div>退出</div>
+      <div class="cursor" @click="onLogoutClick">退出</div>
     </div>
   </div>
 </template>
 <script>
+
+import {defineComponent} from "vue";
+import {useRouter} from "vue-router";
+import localStorage from '@/utils/localstorage.js'
+
+let router = null
+const onLogoutClick = () => {
+  localStorage.clear()
+  router.push('/login?from=logout')
+}
+
+export default defineComponent({
+  setup() {
+    router = useRouter()
+    return {
+      onLogoutClick
+    }
+  }
+})
 
 </script>
 <style scoped>
@@ -36,6 +55,10 @@
   .split {
     margin: 0 5px 0 5px;
     color: #c3c3c3;
+  }
+
+  .cursor{
+    cursor: pointer;
   }
 }
 </style>

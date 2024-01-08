@@ -71,10 +71,9 @@ const onClickLogin = () => {
     }
     const d = {email: formValue.value.email, password: formValue.value.password, version: '1.0'}
     api.UserLogin(d).then(resp => {
-      console.log('[resp]', resp.data)
-      localstorage.setAccessToken(resp.data['access_token'])
-      localstorage.setRefreshToken(resp.data['refresh_token'])
-      localstorage.setNickname(resp.data['nickname'])
+      localstorage.setAccessToken(resp.data.data['access_token'])
+      localstorage.setRefreshToken(resp.data.data['refresh_token'])
+      localstorage.setNickname(resp.data.data['nickname'])
       router.push('/home')
     }).catch(error => {
       modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
