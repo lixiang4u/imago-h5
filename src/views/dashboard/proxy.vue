@@ -4,39 +4,42 @@
       <div>代理列表</div>
       <n-button strong secondary type="success" @click="onShowCreateProxyClick">创建代理</n-button>
     </div>
-    <div class="m-card">
+    <div class="m-card table">
       <n-space vertical :size="12">
         <n-data-table
             :bordered="false"
             :single-line="false"
             :columns="columns"
-            :data="data"
+            :data="proxyList"
             :pagination="pagination"/>
       </n-space>
     </div>
 
     <n-modal v-model:show="showModal" preset="card" style="width: 800px">
-      <template #header>添加代理</template>
+      <template #header>代理信息</template>
       <n-form ref="proxyFormRef" :model="proxyFormValue" :rules="proxyFormRules">
+        <n-form-item label="代理ID" path="id" v-if="showModalReadOnly">
+          <n-input v-model:value="proxyFormValue.id" :disabled="showModalReadOnly" type="number" placeholder="代理ID"/>
+        </n-form-item>
         <n-form-item label="代理名称" path="title">
-          <n-input v-model:value="proxyFormValue.title" type="text" placeholder="请输入代理名称"/>
+          <n-input v-model:value="proxyFormValue.title" :disabled="showModalReadOnly" type="text" placeholder="请输入代理名称"/>
         </n-form-item>
         <n-form-item label="源域名" path="origin">
-          <n-input v-model:value="proxyFormValue.origin" type="text" placeholder="请输入源域名(http://或https://开头)"/>
+          <n-input v-model:value="proxyFormValue.origin" :disabled="showModalReadOnly" type="text" placeholder="请输入源域名(http://或https://开头)"/>
         </n-form-item>
-        <n-collapse>
-          <n-collapse-item title="高级配置">
+        <n-collapse :default-expanded-names="[showModalReadOnly?'1':'']" >
+          <n-collapse-item title="高级配置" name="1">
             <n-form-item label="图片质量" path="quality">
-              <n-input v-model:value="proxyFormValue.quality" type="number" placeholder="请输入图片质量(1-100)"/>
+              <n-input v-model:value="proxyFormValue.quality" :disabled="showModalReadOnly" value="80" type="number" placeholder="请输入图片质量(1-100)"/>
             </n-form-item>
             <n-form-item label="用户代理(UA)" path="user_agent">
-              <n-input v-model:value="proxyFormValue.user_agent" type="text" placeholder="请输入用户代理(UA)"/>
+              <n-input v-model:value="proxyFormValue.user_agent" :disabled="showModalReadOnly" type="text" placeholder="请输入用户代理(UA)"/>
             </n-form-item>
             <n-form-item label="访问限制(CORS)" path="cors">
-              <n-input v-model:value="proxyFormValue.cors" type="text" placeholder="请输入访问限制(CORS)"/>
+              <n-input v-model:value="proxyFormValue.cors" :disabled="showModalReadOnly" type="text" placeholder="请输入访问限制(CORS)"/>
             </n-form-item>
             <n-form-item label="状态" path="status">
-              <n-select v-model:value="proxyFormValue.status" :options="proxyStatusOptions" placeholder="请选择状态"/>
+              <n-select v-model:value="proxyFormValue.status" :disabled="showModalReadOnly" :options="proxyStatusOptions" placeholder="请选择状态"/>
             </n-form-item>
           </n-collapse-item>
         </n-collapse>
@@ -44,8 +47,8 @@
       </n-form>
       <template #action>
         <div class="modal-footer">
-          <n-button class="item" type="warning" @click="showModal=false">取消</n-button>
-          <n-button class="item" type="primary" @click="onCreateProxyClick">添加</n-button>
+          <n-button class="item" type="warning" :disabled="showModalReadOnly" @click="showModal=false">取消</n-button>
+          <n-button class="item" type="primary" :disabled="showModalReadOnly" @click="onCreateProxyClick">添加</n-button>
         </div>
       </template>
     </n-modal>
@@ -56,17 +59,20 @@
 </template>
 
 <script>
-import {defineComponent, ref} from "vue";
-import {NButton, NDataTable, NSpace, useMessage} from "naive-ui";
+import {defineComponent, h, onBeforeMount, ref} from "vue";
+import {NButton, NDataTable, NSpace, NTag, useMessage} from "naive-ui";
 import ModalTipsComponent from "@/components/ModalTipsComponent.vue";
 import api from "@/api/index.js";
+import format from '@/utils/format.js'
 
-
-const createColumns = () => {
+const createColumns = ({opProxyShow, opProxyUpdate, opProxyDelete}) => {
   return [
     {
-      title: "序号",
-      key: "id"
+      title: "#",
+      key: "id",
+      render(_, index) {
+        return `${index + 1}`
+      }
     },
     {
       title: "名称",
@@ -82,78 +88,74 @@ const createColumns = () => {
     },
     {
       title: "状态",
-      key: "status"
+      key: "status",
+      render(row) {
+        return proxyStatusOptions.map(item => {
+          if (item.value === row.status) {
+            if (item.value === 1) {
+              return h(NTag, {type: 'info', bordered: false}, {default: () => item.label})
+            } else {
+              return h(NTag, {type: 'warning', bordered: false}, {default: () => item.label})
+            }
+          }
+        })
+      }
     },
     {
       title: "创建时间",
-      key: "created_at"
+      key: "created_at",
+      render(row) {
+        return format.formatDateTime(row.created_at)
+      }
     },
+    {
+      title: '操作',
+      key: 'A',
+      render(row) {
+        const ops = []
+        ops.push(h(NButton, {
+          class: 'op-btn',
+          strong: 'strong',
+          secondary: 'secondary',
+          onClick: () => opProxyShow(row),
+        }, {default: () => '详情'}))
 
-    // {
-    //   title: "Tags",
-    //   key: "tags",
-    //   render(row) {
-    //     const tags = row.tags.map((tagKey) => {
-    //       return h(
-    //           NTag,
-    //           {
-    //             style: {
-    //               marginRight: "6px"
-    //             },
-    //             type: "info",
-    //             bordered: false
-    //           },
-    //           {
-    //             default: () => tagKey
-    //           }
-    //       );
-    //     });
-    //     return tags;
-    //   }
-    // },
-    // {
-    //   title: "Action",
-    //   key: "actions",
-    //   render(row) {
-    //     return h(
-    //         NButton,
-    //         {
-    //           size: "small",
-    //           onClick: () => sendMail(row)
-    //         },
-    //         {default: () => "Send Email"}
-    //     );
-    //   }
-    // }
+        ops.push(h(NButton, {
+          class: 'op-btn',
+          type: 'warning',
+          strong: 'strong',
+          secondary: 'secondary',
+          onClick: () => opProxyUpdate(row),
+        }, {default: () => '编辑'}))
+
+        ops.push(h(NButton, {
+          class: 'op-btn',
+          type: 'warning',
+          strong: 'strong',
+          secondary: 'secondary',
+          onClick: () => {
+            console.log('[opProxyUpdate(row)]')
+            opProxyUpdate(row)
+          },
+        }, {default: () => '启用'}))
+
+        ops.push(h(NButton, {
+          class: 'op-btn',
+          type: 'error',
+          strong: 'strong',
+          secondary: 'secondary',
+          onClick: () => opProxyDelete(row),
+        }, {default: () => '删除'}))
+        return ops
+      }
+    }
   ];
 };
-
-const createData = () => [
-  // {
-  //   key: 0,
-  //   name: "John Brown",
-  //   age: 32,
-  //   address: "New York No. 1 Lake Park",
-  //   tags: ["nice", "developer"]
-  // },
-  // {
-  //   key: 1,
-  //   name: "Jim Green",
-  //   age: 42,
-  //   address: "London No. 1 Lake Park",
-  //   tags: ["wow"]
-  // },
-  // {
-  //   key: 2,
-  //   name: "Joe Black",
-  //   age: 32,
-  //   address: "Sidney No. 1 Lake Park",
-  //   tags: ["cool", "teacher"]
-  // }
-];
+const proxyList = ref([])
 
 const modalTipsRef = ref(null)
-const showModal = ref(true)
+const showModal = ref(false)
+const showModalReadOnly = ref(false)
 const proxyFormValue = ref({
   id: null,
   title: null,
@@ -201,6 +203,7 @@ const proxyStatusOptions = [{label: '启用', value: 1,}, {label: '禁用', valu
 
 const onShowCreateProxyClick = () => {
   showModal.value = true
+  showModalReadOnly.value = false
 }
 
 const onCreateProxyClick = () => {
@@ -223,12 +226,44 @@ const onCreateProxyClick = () => {
       console.log('[resp]', resp)
       modalTipsRef.value.showSuccess({'message': '创建成功'})
       showModal.value = false
+
+      loadProxyList()
+
     }).catch(error => {
       modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
     }).finally(() => {
     })
 
   })
+}
+
+const loadProxyList = () => {
+  api.ListProxy({q: 1, p: 2}).then(resp => {
+    proxyList.value = resp.data.data
+  }).catch(error => {
+    modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+  }).finally(() => {
+  })
+}
+
+const onBeforeMountHandler = () => {
+  loadProxyList()
+}
+
+const opProxyShow = (row) => {
+  console.log('[opProxyShow]', row)
+  showModal.value = true
+  showModalReadOnly.value = true
+
+  row.id = ''+row.id
+  row.quality = ''+row.quality
+  proxyFormValue.value = row
+}
+const opProxyUpdate = (row) => {
+  console.log('[opProxyUpdate]', row)
+}
+const opProxyDelete = (row) => {
+  console.log('[opProxyDelete]', row)
 }
 
 export default defineComponent({
@@ -238,12 +273,16 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage();
+
+    onBeforeMount(onBeforeMountHandler)
+
     return {
-      data: createData(),
-      columns: createColumns(),
+      proxyList,
+      columns: createColumns({opProxyShow, opProxyUpdate, opProxyDelete}),
       pagination: {
         pageSize: 10
       },
+      showModalReadOnly,
       modalTipsRef,
       onShowCreateProxyClick,
       onCreateProxyClick,
@@ -257,7 +296,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
+<style>
 
 .m-card {
   background-color: #ffffff;
@@ -288,6 +327,10 @@ export default defineComponent({
   .item {
     margin: 0 0 0 20px;
   }
+}
+
+.op-btn {
+  margin: 5px 5px 5px 5px;
 }
 
 </style>

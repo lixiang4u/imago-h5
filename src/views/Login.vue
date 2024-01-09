@@ -26,7 +26,7 @@ import {defineComponent, onBeforeMount, ref} from "vue";
 import {useRoute, useRouter} from 'vue-router'
 import api from "@/api/index.js";
 import ModalTipsComponent from '@/components/ModalTipsComponent.vue'
-import localstorage from "@/utils/localstorage.js";
+import localStorage from "@/utils/localstorage.js";
 
 let route = null
 let router = null
@@ -71,9 +71,9 @@ const onClickLogin = () => {
     }
     const d = {email: formValue.value.email, password: formValue.value.password, version: '1.0'}
     api.UserLogin(d).then(resp => {
-      localstorage.setAccessToken(resp.data.data['access_token'])
-      localstorage.setRefreshToken(resp.data.data['refresh_token'])
-      localstorage.setNickname(resp.data.data['nickname'])
+      localStorage.setAccessToken(resp.data.data['access_token'])
+      localStorage.setRefreshToken(resp.data.data['refresh_token'])
+      localStorage.setNickname(resp.data.data['nickname'])
       router.push('/home')
     }).catch(error => {
       modalTipsRef.value.showError({'message': error.message ?? '系统错误'})

@@ -24,7 +24,17 @@ request.interceptors.response.use(resp => {
     const d = {message: resp.data.msg ?? null, debug: resp}
     return Promise.reject(d)
 }, error => {
-    return Promise.reject(error)
+    // 网络错误问题
+    if (!error.response) {
+        const d = {message: error.message || '网络错误', debug: error}
+        return Promise.reject(d)
+    }
+    if (error.response.status === 401) {
+        const d = {message: '登录已过期，请重新登录', debug: error}
+        return Promise.reject(d)
+    } else {
+        return Promise.reject(error)
+    }
 })
 
 export default request

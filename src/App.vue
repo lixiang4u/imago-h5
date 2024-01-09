@@ -10,7 +10,9 @@ export default defineComponent({
 
 <template>
   <n-message-provider>
-    <RouterView/>
+    <n-dialog-provider>
+      <RouterView/>
+    </n-dialog-provider>
   </n-message-provider>
 </template>
 
