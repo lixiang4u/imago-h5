@@ -17,8 +17,10 @@ export default {
         return request.delete(`/user/proxy/${id}`)
     },
     ListProxy: (params) => {
-        // params
         return request.get('/user/proxies', {params})
+    },
+    ListProxyLog: (proxyId, params) => {
+        return request.get(`/user/proxy/${proxyId}/logs`, {params})
     },
     RefreshToken: (token) => {
         // params

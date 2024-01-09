@@ -79,6 +79,9 @@ import {NButton, NDataTable, NSpace, NTag, useMessage} from "naive-ui";
 import ModalTipsComponent from "@/components/ModalTipsComponent.vue";
 import api from "@/api/index.js";
 import format from '@/utils/format.js'
+import {useRouter} from "vue-router";
+
+let router = null
 
 const createColumns = ({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxyDelete}) => {
   return [
@@ -152,6 +155,18 @@ const createColumns = ({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxy
           onClick: () => opProxyShow(row),
         }, {
           default: () => '详情'
+        }))
+
+        ops.push(h(NButton, {
+          class: 'op-btn',
+          strong: 'strong',
+          secondary: 'secondary',
+          style: style,
+          onClick: () => {
+            router.push(`/proxy/${+row.id}/log`)
+          },
+        }, {
+          default: () => '日志'
         }))
 
         ops.push(h(NButton, {
@@ -468,6 +483,7 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage();
+    router = useRouter()
 
     onBeforeMount(onBeforeMountHandler)
 
