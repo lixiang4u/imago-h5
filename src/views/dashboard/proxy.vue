@@ -15,31 +15,42 @@
       </n-space>
     </div>
 
-    <n-modal v-model:show="showModal" preset="card" style="width: 800px">
+    <n-modal v-model:show="showModalConf.show" preset="card" style="width: 800px">
       <template #header>代理信息</template>
       <n-form ref="proxyFormRef" :model="proxyFormValue" :rules="proxyFormRules">
-        <n-form-item label="代理ID" path="id" v-if="showModalReadOnly">
-          <n-input v-model:value="proxyFormValue.id" :disabled="showModalReadOnly" type="number" placeholder="代理ID"/>
+        <n-form-item label="代理ID" path="id" v-if="showModalConf.show">
+          <n-input v-model:value="proxyFormValue.id" :disabled="true" type="number"
+                   placeholder="代理ID"/>
         </n-form-item>
         <n-form-item label="代理名称" path="title">
-          <n-input v-model:value="proxyFormValue.title" :disabled="showModalReadOnly" type="text" placeholder="请输入代理名称"/>
+          <n-input v-model:value="proxyFormValue.title" :disabled="showModalConf.readOnly" type="text"
+                   placeholder="请输入代理名称"/>
         </n-form-item>
         <n-form-item label="源域名" path="origin">
-          <n-input v-model:value="proxyFormValue.origin" :disabled="showModalReadOnly" type="text" placeholder="请输入源域名(http://或https://开头)"/>
+          <n-input v-model:value="proxyFormValue.origin" :disabled="showModalConf.readOnly" type="text"
+                   placeholder="请输入源域名(http://或https://开头)"/>
         </n-form-item>
-        <n-collapse :default-expanded-names="[showModalReadOnly?'1':'']" >
+        <n-form-item label="主机地址" path="host">
+          <n-input v-model:value="proxyFormValue.host" :disabled="true" type="text"
+                   placeholder="主机地址(系统生成)"/>
+        </n-form-item>
+        <n-collapse :default-expanded-names="[showModalConf.readOnly?'1':'']">
           <n-collapse-item title="高级配置" name="1">
             <n-form-item label="图片质量" path="quality">
-              <n-input v-model:value="proxyFormValue.quality" :disabled="showModalReadOnly" value="80" type="number" placeholder="请输入图片质量(1-100)"/>
+              <n-input v-model:value="proxyFormValue.quality" :disabled="showModalConf.readOnly" value="80"
+                       type="number" placeholder="请输入图片质量(1-100)"/>
             </n-form-item>
             <n-form-item label="用户代理(UA)" path="user_agent">
-              <n-input v-model:value="proxyFormValue.user_agent" :disabled="showModalReadOnly" type="text" placeholder="请输入用户代理(UA)"/>
+              <n-input v-model:value="proxyFormValue.user_agent" :disabled="showModalConf.readOnly" type="text"
+                       placeholder="请输入用户代理(UA)"/>
             </n-form-item>
             <n-form-item label="访问限制(CORS)" path="cors">
-              <n-input v-model:value="proxyFormValue.cors" :disabled="showModalReadOnly" type="text" placeholder="请输入访问限制(CORS)"/>
+              <n-input v-model:value="proxyFormValue.cors" :disabled="showModalConf.readOnly" type="text"
+                       placeholder="请输入访问限制(CORS)"/>
             </n-form-item>
             <n-form-item label="状态" path="status">
-              <n-select v-model:value="proxyFormValue.status" :disabled="showModalReadOnly" :options="proxyStatusOptions" placeholder="请选择状态"/>
+              <n-select v-model:value="proxyFormValue.status" :disabled="showModalConf.readOnly"
+                        :options="proxyStatusOptions" placeholder="请选择状态"/>
             </n-form-item>
           </n-collapse-item>
         </n-collapse>
@@ -47,8 +58,11 @@
       </n-form>
       <template #action>
         <div class="modal-footer">
-          <n-button class="item" type="warning" :disabled="showModalReadOnly" @click="showModal=false">取消</n-button>
-          <n-button class="item" type="primary" :disabled="showModalReadOnly" @click="onCreateProxyClick">添加</n-button>
+          <n-button class="item" type="warning" @click="showModalConf.show=false">取消</n-button>
+          <n-button class="item" type="primary" v-if="showModalConf.isCreate" @click="onCreateProxyClick">添加
+          </n-button>
+          <n-button class="item" type="primary" v-if="showModalConf.isUpdate" @click="onUpdateProxyClick">修改
+          </n-button>
         </div>
       </template>
     </n-modal>
@@ -151,11 +165,18 @@ const createColumns = ({opProxyShow, opProxyUpdate, opProxyDelete}) => {
     }
   ];
 };
+
 const proxyList = ref([])
 
 const modalTipsRef = ref(null)
-const showModal = ref(false)
-const showModalReadOnly = ref(false)
+
+const showModalConf = ref({
+  show: false,
+  readOnly: false,
+  isCreate: false,
+  isUpdate: false,
+})
+
 const proxyFormValue = ref({
   id: null,
   title: null,
@@ -167,7 +188,9 @@ const proxyFormValue = ref({
   referer: null,
   status: 1,
 })
+
 const proxyFormRef = ref(null)
+
 const proxyFormRules = {
   title: [{
     required: true,
@@ -202,8 +225,9 @@ const proxyFormRules = {
 const proxyStatusOptions = [{label: '启用', value: 1,}, {label: '禁用', value: 0,}]
 
 const onShowCreateProxyClick = () => {
-  showModal.value = true
-  showModalReadOnly.value = false
+  proxyFormRef.value = null
+  showModalConf.value.show = true
+  showModalConf.value.readOnly = false
 }
 
 const onCreateProxyClick = () => {
@@ -224,8 +248,8 @@ const onCreateProxyClick = () => {
     }
     api.CreateProxy(data).then(resp => {
       console.log('[resp]', resp)
-      modalTipsRef.value.showSuccess({'message': '创建成功'})
-      showModal.value = false
+      modalTipsRef.value.showSuccess({'message': resp.data.msg})
+      showModalConf.value.show = false
 
       loadProxyList()
 
@@ -235,6 +259,43 @@ const onCreateProxyClick = () => {
     })
 
   })
+}
+
+const onUpdateProxyClick = () => {
+  console.log('[proxyFormRef', proxyFormRef)
+  proxyFormRef.value?.validate(error => {
+    if (error) {
+      modalTipsRef.value.showError({'message': error[0][0].message ?? '表单输入错误'})
+      return
+    }
+    const id = +proxyFormValue.value.id
+    const data = {
+      title: proxyFormValue.value.title,
+      origin: proxyFormValue.value.origin,
+      quality: +proxyFormValue.value.quality,
+      user_agent: proxyFormValue.value.user_agent,
+      cors: proxyFormValue.value.cors,
+      referer: proxyFormValue.value.referer,
+      status: +proxyFormValue.value.status,
+    }
+    if (id <= 0) {
+      modalTipsRef.value.showError({'message': '更新数据异常'})
+      return
+    }
+    api.UpdateProxy(id, data).then(resp => {
+      console.log('[resp]', resp)
+      modalTipsRef.value.showSuccess({'message': resp.data.msg})
+      showModalConf.value.show = false
+
+      loadProxyList()
+
+    }).catch(error => {
+      modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+    }).finally(() => {
+    })
+
+  })
+
 }
 
 const loadProxyList = () => {
@@ -251,19 +312,25 @@ const onBeforeMountHandler = () => {
 }
 
 const opProxyShow = (row) => {
-  console.log('[opProxyShow]', row)
-  showModal.value = true
-  showModalReadOnly.value = true
+  showModalConf.value.show = true
+  showModalConf.value.readOnly = true
 
-  row.id = ''+row.id
-  row.quality = ''+row.quality
+  row.id = '' + row.id
+  row.quality = '' + row.quality
   proxyFormValue.value = row
 }
 const opProxyUpdate = (row) => {
-  console.log('[opProxyUpdate]', row)
+  showModalConf.value.show = true
+  showModalConf.value.readOnly = false
+  showModalConf.value.isUpdate = true
+
+  row.id = '' + row.id
+  row.quality = '' + row.quality
+  proxyFormValue.value = row
 }
 const opProxyDelete = (row) => {
   console.log('[opProxyDelete]', row)
+  //
 }
 
 export default defineComponent({
@@ -282,11 +349,11 @@ export default defineComponent({
       pagination: {
         pageSize: 10
       },
-      showModalReadOnly,
+      showModalConf,
       modalTipsRef,
       onShowCreateProxyClick,
       onCreateProxyClick,
-      showModal,
+      onUpdateProxyClick,
       proxyFormValue,
       proxyFormRef,
       proxyFormRules,
