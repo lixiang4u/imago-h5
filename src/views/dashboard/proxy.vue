@@ -113,6 +113,11 @@ const createColumns = ({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxy
             }
           }
         })
+      },
+      defaultSortOrder: false,
+      sorter: {
+        compare: (a, b) => a.status - b.status,
+        multiple: 2
       }
     },
     {
@@ -120,6 +125,11 @@ const createColumns = ({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxy
       key: "created_at",
       render(row) {
         return format.formatDateTime(row.created_at)
+      },
+      defaultSortOrder: false,
+      sorter: {
+        compare: (a, b) => format.formatToUnixTime(a.created_at) - format.formatToUnixTime(b.created_at),
+        multiple: 2
       }
     },
     {

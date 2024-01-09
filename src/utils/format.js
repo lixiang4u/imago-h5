@@ -1,13 +1,14 @@
 import moment from "moment";
 
-const formatDateTime=(dateTime)=>{
+const formatDateTime = (dateTime) => {
     return moment(dateTime).format("YYYY-MM-DD HH:mm:ss");
 }
-const AA=()=>{
-    console.log('[AA]')
+
+const formatToUnixTime = (dateTime) => {
+    return moment(dateTime).unix();
 }
 
 export default {
     formatDateTime,
-    AA
+    formatToUnixTime
 }
