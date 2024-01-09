@@ -10,8 +10,13 @@
         aria-modal="true"
     >
       <template #header-extra></template>
-      {{ modalConfig.message }}
-      <template #footer></template>
+      <div v-html="modalConfig.message"></div>
+      <template #footer>
+        <div class="modal-footer" v-if="modalConfig.isConfirm">
+          <n-button class="item" type="warning" @click="onCancelClick">取消</n-button>
+          <n-button class="item" type="primary" @click="onConfirmClick">确认</n-button>
+        </div>
+      </template>
       <template #header>
         <div class="head-title">
           <div class="vcenter">
@@ -32,6 +37,7 @@
 import {defineComponent, ref} from 'vue'
 import ErrorFilled from "@vicons/material/ErrorFilled";
 import CloseRound from "@vicons/material/CloseRound";
+import {NButton} from "naive-ui";
 
 const modalConfig = ref({
   show: false,
@@ -39,7 +45,10 @@ const modalConfig = ref({
   timeout: null,
   title: null,
   message: null,
-  defaultConfig: {timeout: 3e3, color: 'default', title: '提示', message: '无消息'},
+  isConfirm: null,
+  onConfirmCallback: null,
+  onCancelCallback: null,
+  defaultConfig: {timeout: 3e3, color: 'default', title: '提示', message: '无消息', isConfirm: false},
 })
 
 const countdown = () => {
@@ -56,7 +65,7 @@ const showModal = (config) => {
     modalConfig.value[configKey] = modalConfig.value.defaultConfig[configKey]
   }
   if (config) {
-    const keys = ['color', 'timeout', 'title', 'message',]
+    const keys = ['color', 'timeout', 'title', 'message', 'isConfirm']
     for (const key in keys) {
       if (config.hasOwnProperty(keys[key])) {
         modalConfig.value[keys[key]] = config[keys[key]]
@@ -64,19 +73,27 @@ const showModal = (config) => {
     }
   }
   modalConfig.value.show = true
-  countdown()
+  if (!modalConfig.value.isConfirm) {
+    countdown()
+  }
 }
 
 const showSuccess = (config) => {
-  config = Object.assign(config ?? {}, {'color': 'success'})
+  config = Object.assign(config ?? {}, {color: 'success'})
   showModal(config)
 }
 const showError = (config) => {
-  config = Object.assign(config ?? {}, {'color': 'error'})
+  config = Object.assign(config ?? {}, {color: 'error'})
   showModal(config)
 }
 const showWarning = (config) => {
-  config = Object.assign(config ?? {}, {'color': 'warning'})
+  config = Object.assign(config ?? {}, {color: 'warning'})
+  showModal(config)
+}
+const showConfirm = (config, onConfirmCallback, onCancelCallback) => {
+  config = Object.assign(config ?? {}, {color: 'warning', isConfirm: true})
+  modalConfig.value.onConfirmCallback = onConfirmCallback
+  modalConfig.value.onCancelCallback = onCancelCallback
   showModal(config)
 }
 
@@ -85,8 +102,22 @@ const onModalClose = () => {
   modalConfig.value.timeout = 0
 }
 
+const onConfirmClick = () => {
+  modalConfig.value.show = false
+  if (modalConfig.value.onConfirmCallback) {
+    modalConfig.value.onConfirmCallback()
+  }
+}
+const onCancelClick = () => {
+  modalConfig.value.show = false
+  if (modalConfig.value.onCancelCallback) {
+    modalConfig.value.onCancelCallback()
+  }
+}
+
 export default defineComponent({
   components: {
+    NButton,
     ErrorFilled,
     CloseRound,
   },
@@ -98,7 +129,10 @@ export default defineComponent({
       showSuccess,
       showError,
       showWarning,
+      showConfirm,
       onModalClose,
+      onConfirmClick,
+      onCancelClick,
     }
   }
 })
@@ -106,6 +140,17 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
+.modal-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  align-items: center;
+
+  .item {
+    margin: 0 0 0 20px;
+  }
+}
 
 .head-title {
   display: flex;

@@ -13,6 +13,9 @@ export default {
     UpdateProxy: (id, data) => {
         return request.put(`/user/proxy/${id}`, data)
     },
+    DeleteProxy: (id) => {
+        return request.delete(`/user/proxy/${id}`)
+    },
     ListProxy: (query) => {
         // params
         return request.get('/user/proxies', query)

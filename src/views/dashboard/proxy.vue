@@ -18,7 +18,7 @@
     <n-modal v-model:show="showModalConf.show" preset="card" style="width: 800px">
       <template #header>代理信息</template>
       <n-form ref="proxyFormRef" :model="proxyFormValue" :rules="proxyFormRules">
-        <n-form-item label="代理ID" path="id" v-if="showModalConf.show">
+        <n-form-item label="代理ID" path="id" v-if="showModalConf.show && !showModalConf.isCreate">
           <n-input v-model:value="proxyFormValue.id" :disabled="true" type="number"
                    placeholder="代理ID"/>
         </n-form-item>
@@ -79,7 +79,7 @@ import ModalTipsComponent from "@/components/ModalTipsComponent.vue";
 import api from "@/api/index.js";
 import format from '@/utils/format.js'
 
-const createColumns = ({opProxyShow, opProxyUpdate, opProxyDelete}) => {
+const createColumns = ({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxyDelete}) => {
   return [
     {
       title: "#",
@@ -127,39 +127,81 @@ const createColumns = ({opProxyShow, opProxyUpdate, opProxyDelete}) => {
       key: 'A',
       render(row) {
         const ops = []
+        const style = {
+          marginLeft: '5px',
+          marginRight: '5px',
+          marginTop: '5px',
+          marginBottom: '5px',
+        }
         ops.push(h(NButton, {
           class: 'op-btn',
           strong: 'strong',
           secondary: 'secondary',
+          style: style,
           onClick: () => opProxyShow(row),
-        }, {default: () => '详情'}))
+        }, {
+          default: () => '详情'
+        }))
 
         ops.push(h(NButton, {
           class: 'op-btn',
           type: 'warning',
           strong: 'strong',
           secondary: 'secondary',
+          style: style,
           onClick: () => opProxyUpdate(row),
-        }, {default: () => '编辑'}))
+        }, {
+          default: () => '编辑'
+        }))
 
-        ops.push(h(NButton, {
-          class: 'op-btn',
-          type: 'warning',
-          strong: 'strong',
-          secondary: 'secondary',
-          onClick: () => {
-            console.log('[opProxyUpdate(row)]')
-            opProxyUpdate(row)
-          },
-        }, {default: () => '启用'}))
+        if (row.status === 1) {
+          ops.push(h(NButton, {
+            class: 'op-btn',
+            type: 'warning',
+            strong: 'strong',
+            secondary: 'secondary',
+            style: style,
+            onClick: () => {
+              if (row.status === 1) {
+                row.status = 0
+              } else {
+                row.status = 1
+              }
+              opProxyUpdateStatus(row)
+            },
+          }, {
+            default: () => '禁用'
+          }))
+        } else {
+          ops.push(h(NButton, {
+            class: 'op-btn',
+            type: 'info',
+            strong: 'strong',
+            style: style,
+            secondary: 'secondary',
+            onClick: () => {
+              if (row.status === 1) {
+                row.status = 0
+              } else {
+                row.status = 1
+              }
+              opProxyUpdateStatus(row)
+            },
+          }, {
+            default: () => '启用'
+          }))
+        }
 
         ops.push(h(NButton, {
           class: 'op-btn',
           type: 'error',
           strong: 'strong',
+          style: style,
           secondary: 'secondary',
           onClick: () => opProxyDelete(row),
-        }, {default: () => '删除'}))
+        }, {
+          default: () => '删除'
+        }))
         return ops
       }
     }
@@ -226,8 +268,18 @@ const proxyStatusOptions = [{label: '启用', value: 1,}, {label: '禁用', valu
 
 const onShowCreateProxyClick = () => {
   proxyFormRef.value = null
-  showModalConf.value.show = true
-  showModalConf.value.readOnly = false
+
+  showModalConf.value = {
+    show: true,
+    readOnly: false,
+    isCreate: true,
+    isUpdate: false,
+  }
+
+  proxyFormValue.value = {
+    quality: '80',
+    status: 1,
+  }
 }
 
 const onCreateProxyClick = () => {
@@ -312,25 +364,76 @@ const onBeforeMountHandler = () => {
 }
 
 const opProxyShow = (row) => {
-  showModalConf.value.show = true
-  showModalConf.value.readOnly = true
+  showModalConf.value = {
+    show: true,
+    readOnly: true,
+    isCreate: false,
+    isUpdate: false,
+  }
 
   row.id = '' + row.id
   row.quality = '' + row.quality
-  proxyFormValue.value = row
+  proxyFormValue.value = Object.assign({}, row)
 }
+
 const opProxyUpdate = (row) => {
-  showModalConf.value.show = true
-  showModalConf.value.readOnly = false
-  showModalConf.value.isUpdate = true
+  showModalConf.value = {
+    show: true,
+    readOnly: false,
+    isCreate: false,
+    isUpdate: true,
+  }
 
   row.id = '' + row.id
   row.quality = '' + row.quality
-  proxyFormValue.value = row
+  proxyFormValue.value = Object.assign({}, row)
 }
+
+const opProxyUpdateStatus = (row) => {
+  const id = +row.id
+  const data = {
+    title: row.title,
+    origin: row.origin,
+    quality: +row.quality,
+    user_agent: row.user_agent,
+    cors: row.cors,
+    referer: row.referer,
+    status: +row.status,
+  }
+  if (id <= 0) {
+    modalTipsRef.value.showError({'message': '未选择更新数据'})
+    return
+  }
+  api.UpdateProxy(id, data).then(resp => {
+    console.log('[resp]', resp)
+    modalTipsRef.value.showSuccess({'message': resp.data.msg})
+    showModalConf.value.show = false
+
+    loadProxyList()
+
+  }).catch(error => {
+    modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+  }).finally(() => {
+  })
+}
+
 const opProxyDelete = (row) => {
-  console.log('[opProxyDelete]', row)
-  //
+  if (+row.id <= 0) {
+    modalTipsRef.value.showError({'message': '未选择删除数据'})
+    return
+  }
+  modalTipsRef.value.showConfirm({'message': `确定删除 <b>${row.title}</b>？`}, () => {
+    api.DeleteProxy(row.id).then(resp => {
+      console.log('[resp]', resp)
+      modalTipsRef.value.showSuccess({'message': resp.data.msg})
+      showModalConf.value.show = false
+
+      loadProxyList()
+    }).catch(error => {
+      modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+    }).finally(() => {
+    })
+  })
 }
 
 export default defineComponent({
@@ -345,7 +448,7 @@ export default defineComponent({
 
     return {
       proxyList,
-      columns: createColumns({opProxyShow, opProxyUpdate, opProxyDelete}),
+      columns: createColumns({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxyDelete}),
       pagination: {
         pageSize: 10
       },
@@ -363,7 +466,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 
 .m-card {
   background-color: #ffffff;
