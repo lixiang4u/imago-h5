@@ -11,6 +11,7 @@
             :single-line="false"
             :columns="columns"
             :data="proxyList"
+            :remote="true"
             :pagination="pagination"/>
       </n-space>
     </div>
@@ -73,7 +74,7 @@
 </template>
 
 <script>
-import {defineComponent, h, onBeforeMount, ref} from "vue";
+import {defineComponent, h, onBeforeMount, reactive, ref} from "vue";
 import {NButton, NDataTable, NSpace, NTag, useMessage} from "naive-ui";
 import ModalTipsComponent from "@/components/ModalTipsComponent.vue";
 import api from "@/api/index.js";
@@ -361,8 +362,9 @@ const onUpdateProxyClick = () => {
 }
 
 const loadProxyList = () => {
-  api.ListProxy({q: 1, p: 2}).then(resp => {
+  api.ListProxy({limit: pagination.pageSize, page: pagination.page}).then(resp => {
     proxyList.value = resp.data.data
+    pagination.itemCount = resp.data.total
   }).catch(error => {
     modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
   }).finally(() => {
@@ -446,6 +448,19 @@ const opProxyDelete = (row) => {
   })
 }
 
+const pagination = reactive({
+  page: 1,
+  pageSize: 20,
+  onChange: (page) => {
+    console.log('[onChange]', page)
+    pagination.page = page
+    loadProxyList()
+  },
+  onUpdatePageSize: (pageSize) => {
+    console.log('[onUpdatePageSize]', pageSize)
+  },
+})
+
 export default defineComponent({
   components: {
     ModalTipsComponent,
@@ -459,9 +474,7 @@ export default defineComponent({
     return {
       proxyList,
       columns: createColumns({opProxyShow, opProxyUpdate, opProxyUpdateStatus, opProxyDelete}),
-      pagination: {
-        pageSize: 10
-      },
+      pagination,
       showModalConf,
       modalTipsRef,
       onShowCreateProxyClick,

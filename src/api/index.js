@@ -16,9 +16,9 @@ export default {
     DeleteProxy: (id) => {
         return request.delete(`/user/proxy/${id}`)
     },
-    ListProxy: (query) => {
+    ListProxy: (params) => {
         // params
-        return request.get('/user/proxies', query)
+        return request.get('/user/proxies', {params})
     },
     RefreshToken: (token) => {
         // params
