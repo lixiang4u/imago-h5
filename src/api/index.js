@@ -10,6 +10,9 @@ export default {
     CreateProxy: (data) => {
         return request.post('/user/proxy', data)
     },
+    UpdateProxy: (id, data) => {
+        return request.put(`/user/proxy/${id}`, data)
+    },
     ListProxy: (query) => {
         // params
         return request.get('/user/proxies', query)
