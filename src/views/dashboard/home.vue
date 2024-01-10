@@ -53,7 +53,24 @@
         </div>
       </div>
     </div>
-    <!--<div class="m-card"></div>-->
+    <div class="m-card">
+      <n-form
+          ref="formRef"
+          inline
+          :label-width="80"
+          label-placement="left">
+        <n-grid :cols="24">
+          <n-form-item-gi :span="5" label="选择代理">
+            <n-select v-model:value="selectedProxy" placeholder="所有代理" :options="proxyOptions"/>
+          </n-form-item-gi>
+        </n-grid>
+      </n-form>
+
+      <div style="height: 500px; width: 100%;">
+        <v-chart class="chart" :option="chartOption" autoresize/>
+      </div>
+
+    </div>
 
   </div>
 </template>
@@ -62,6 +79,18 @@
 import {defineComponent, onBeforeMount, ref} from "vue";
 import api from "@/api/index.js";
 import format from "@/utils/format.js";
+import {use} from 'echarts/core';
+import {CanvasRenderer} from 'echarts/renderers';
+import {LineChart, PieChart} from 'echarts/charts';
+import {
+  GridComponent,
+  LegendComponent,
+  TitleComponent,
+  TooltipComponent,
+  VisualMapComponent,
+} from 'echarts/components';
+import VChart from 'vue-echarts';
+
 
 const proxyStat = ref({
   proxy_count: 0,
@@ -70,6 +99,53 @@ const proxyStat = ref({
   saved_bytes: 0,
   response_unit: 'MB',
   saved_unit: 'MB',
+})
+
+let chartXAxisList = ref([])
+let chartSeriesList = ref([])
+
+const selectedProxy = ref(null)
+const proxyOptions = ref([
+  {label: '代理1', value: '代理1'},
+  {label: '代理2', value: '代理2'},
+  {label: '代理3', value: '代理3'},
+  {label: '代理4', value: '代理4'},
+])
+
+const chartOption = ref({
+  // Make gradient line here
+  visualMap: [
+    {
+      show: false,
+      type: 'continuous',
+      seriesIndex: 0,
+      min: 0,
+      max: 400
+    },
+  ],
+  title: [
+    {
+      left: 'center',
+      text: '请求统计'
+    }
+  ],
+  tooltip: {
+    trigger: 'axis'
+  },
+  xAxis: [
+    {
+      data: chartXAxisList
+    }
+  ],
+  yAxis: [{}],
+  grid: [{}],
+  series: [
+    {
+      type: 'line',
+      showSymbol: false,
+      data: chartSeriesList
+    }
+  ]
 })
 
 const handleProxyStateFormat = (data) => {
@@ -83,9 +159,6 @@ const handleProxyStateFormat = (data) => {
   }
   const resp = format.formatBytes(data.response_bytes).split(' ')
   const save = format.formatBytes(data.saved_bytes).split(' ')
-
-  console.log('[resp]', resp, resp.length)
-
   if (resp.length === 2) {
     r.response_bytes = resp[0]
     r.response_unit = resp[1]
@@ -94,30 +167,62 @@ const handleProxyStateFormat = (data) => {
     r.saved_bytes = save[0]
     r.saved_unit = save[1]
   }
-
-  console.log('[r]', r)
-
   return r
 }
 
 const loadProxyStat = () => {
   api.ProxyStat().then(resp => {
-    console.log('[resp.data]', resp.data.data)
     proxyStat.value = handleProxyStateFormat(resp.data.data)
   }).catch(err => {
-    modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+    // modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+  })
+}
+
+const loadProxyRequestStat = (proxyId) => {
+  proxyId = parseInt(proxyId, 10)
+  if (isNaN(proxyId)) {
+    proxyId = 0
+  }
+  api.ProxyRequestStat(proxyId).then(resp => {
+    chartXAxisList.value = resp.data.data.map(item => {
+      return item['t']
+    })
+    chartSeriesList.value = resp.data.data.map(item => {
+      return item['count']
+    })
+  }).catch(err => {
+    // modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
   })
 }
 
 const onBeforeMountHandler = () => {
   loadProxyStat()
+  loadProxyRequestStat()
 }
 
 export default defineComponent({
+  components: {
+    VChart,
+
+  },
   setup() {
+    use([
+      CanvasRenderer,
+      PieChart,
+      TitleComponent,
+      TooltipComponent,
+      LegendComponent,
+      VisualMapComponent,
+      GridComponent,
+      LineChart,
+    ])
+
     onBeforeMount(onBeforeMountHandler)
     return {
       proxyStat,
+      chartOption,
+      selectedProxy,
+      proxyOptions,
     }
   }
 })

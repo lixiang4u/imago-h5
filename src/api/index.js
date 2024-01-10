@@ -28,6 +28,9 @@ export default {
     ProxyStat: () => {
         return request.get(`/user/proxy/stat`)
     },
+    ProxyRequestStat: (proxyId) => {
+        return request.get(`/proxy/${proxyId}/request/stat`)
+    },
     RefreshToken: (token) => {
         // params
         return request.get('/user/refresh-token', {config: {headers: {Authorization: ''}}})
