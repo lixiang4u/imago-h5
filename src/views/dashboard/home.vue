@@ -130,7 +130,7 @@ const chartOption = ref({
     }
   ],
   tooltip: {
-    trigger: 'axis'
+    trigger: 'axis',
   },
   xAxis: [
     {
@@ -143,7 +143,8 @@ const chartOption = ref({
     {
       type: 'line',
       showSymbol: false,
-      data: chartSeriesList
+      data: chartSeriesList,
+      smooth: true
     }
   ]
 })
