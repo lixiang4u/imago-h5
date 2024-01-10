@@ -55,13 +55,17 @@
     </div>
     <div class="m-card">
       <n-form
-          ref="formRef"
           inline
           :label-width="80"
           label-placement="left">
         <n-grid :cols="24">
-          <n-form-item-gi :span="5" label="选择代理">
-            <n-select v-model:value="selectedProxy" placeholder="所有代理" :options="proxyOptions"/>
+          <n-form-item-gi :span="24" label="选择代理">
+            <n-select
+                v-model:value="selectedProxy"
+                placeholder="所有代理"
+                :options="proxyOptions"
+                @update:value="onProxyChange"
+                clearable/>
           </n-form-item-gi>
         </n-grid>
       </n-form>
@@ -105,12 +109,7 @@ let chartXAxisList = ref([])
 let chartSeriesList = ref([])
 
 const selectedProxy = ref(null)
-const proxyOptions = ref([
-  {label: '代理1', value: '代理1'},
-  {label: '代理2', value: '代理2'},
-  {label: '代理3', value: '代理3'},
-  {label: '代理4', value: '代理4'},
-])
+const proxyOptions = ref([])
 
 const chartOption = ref({
   // Make gradient line here
@@ -171,6 +170,23 @@ const handleProxyStateFormat = (data) => {
   return r
 }
 
+const loadProxyList = () => {
+  api.ListProxy().then(resp => {
+    console.log('[resp.data.data]', resp.data.data)
+
+    proxyOptions.value = resp.data.data.map(item => {
+      return {
+        label: `${item.host}(${item.title})`,
+        value: item.id
+      }
+    })
+    //proxyOptions
+
+  }).catch(err => {
+    // modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+  })
+}
+
 const loadProxyStat = () => {
   api.ProxyStat().then(resp => {
     proxyStat.value = handleProxyStateFormat(resp.data.data)
@@ -185,18 +201,28 @@ const loadProxyRequestStat = (proxyId) => {
     proxyId = 0
   }
   api.ProxyRequestStat(proxyId).then(resp => {
-    chartXAxisList.value = resp.data.data.map(item => {
-      return item['t']
-    })
-    chartSeriesList.value = resp.data.data.map(item => {
-      return item['count']
-    })
+    if (!resp.data.data) {
+      chartXAxisList.value = []
+      chartSeriesList.value = []
+    } else {
+      chartXAxisList.value = resp.data.data.map(item => {
+        return item['t']
+      })
+      chartSeriesList.value = resp.data.data.map(item => {
+        return item['count']
+      })
+    }
   }).catch(err => {
     // modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
   })
 }
 
+const onProxyChange = (value, option) => {
+  loadProxyRequestStat(value)
+}
+
 const onBeforeMountHandler = () => {
+  loadProxyList()
   loadProxyStat()
   loadProxyRequestStat()
 }
@@ -224,6 +250,7 @@ export default defineComponent({
       chartOption,
       selectedProxy,
       proxyOptions,
+      onProxyChange,
     }
   }
 })
