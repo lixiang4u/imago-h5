@@ -41,7 +41,7 @@ const createColumns = () => {
     },
     {
       title: "请求地址",
-      key: "origin_url"
+      key: "request_url"
     },
     {
       title: "溯源",

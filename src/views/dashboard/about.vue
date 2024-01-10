@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="m-card">
-      about.vue
+      This is an about page
     </div>
   </div>
 </template>

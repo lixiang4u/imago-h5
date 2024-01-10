@@ -9,7 +9,7 @@
             <span class="title">总代理数量</span>
             <span class="q"></span>
           </div>
-          <div class="v">
+          <div class="v" @click="$router.push('/proxy')">
             <span class="value">{{ proxyStat.proxy_count }}</span>
             <span class="uint">个</span>
           </div>
@@ -63,7 +63,14 @@ import {defineComponent, onBeforeMount, ref} from "vue";
 import api from "@/api/index.js";
 import format from "@/utils/format.js";
 
-const proxyStat = ref(null)
+const proxyStat = ref({
+  proxy_count: 0,
+  request_count: 0,
+  response_bytes: 0,
+  saved_bytes: 0,
+  response_unit: 'MB',
+  saved_unit: 'MB',
+})
 
 const handleProxyStateFormat = (data) => {
   const r = {
