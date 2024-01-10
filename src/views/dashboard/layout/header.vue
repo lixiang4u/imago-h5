@@ -4,7 +4,7 @@
       <div class="logo">imago</div>
     </div>
     <div class="flex flex-row">
-      <div>imago-service@github.com</div>
+      <div>@{{nickname}}</div>
       <span class="split">|</span>
       <div class="cursor" @click="onLogoutClick">退出</div>
     </div>
@@ -22,11 +22,14 @@ const onLogoutClick = () => {
   router.push('/login?from=logout')
 }
 
+const nickname = localStorage.getNickname()
+
 export default defineComponent({
   setup() {
     router = useRouter()
     return {
-      onLogoutClick
+      nickname,
+      onLogoutClick,
     }
   }
 })

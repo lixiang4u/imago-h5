@@ -46,6 +46,7 @@ const modalConfig = ref({
   title: null,
   message: null,
   isConfirm: null,
+  onCallback: null,
   onConfirmCallback: null,
   onCancelCallback: null,
   defaultConfig: {timeout: 3e3, color: 'default', title: '提示', message: '无消息', isConfirm: false},
@@ -54,6 +55,9 @@ const modalConfig = ref({
 const countdown = () => {
   if (modalConfig.value.timeout <= 0) {
     modalConfig.value.show = false
+    if (modalConfig.value.onCallback) {
+      modalConfig.value.onCallback()
+    }
   } else {
     modalConfig.value.timeout -= 1e3;
     setTimeout(countdown, 1e3)
@@ -78,8 +82,9 @@ const showModal = (config) => {
   }
 }
 
-const showSuccess = (config) => {
+const showSuccess = (config, onCallback) => {
   config = Object.assign(config ?? {}, {color: 'success'})
+  modalConfig.value.onCallback = onCallback
   showModal(config)
 }
 const showError = (config) => {

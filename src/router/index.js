@@ -5,8 +5,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('../views/WxLogin.vue')
+      name: '/',
+      component: () => import('../views/Login.vue')
     },
     {
       path: '/about',

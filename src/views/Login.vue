@@ -40,6 +40,11 @@ const modalTipsRef = ref(null)
 
 const onBeforeMountHandler = () => {
   formValue.value.email = route.query['email']
+
+  if (localStorage.getAccessToken()) {
+    loginCheck()
+  }
+
 }
 
 const rules = {
@@ -81,6 +86,15 @@ const onClickLogin = () => {
   })
 }
 
+const loginCheck = () => {
+  api.UserStatus().then(resp => {
+    modalTipsRef.value.showSuccess({'message': `欢迎回来 ${resp.data.data['nickname']}`}, () => {
+      router.push('/home')
+    })
+
+  }).catch(error => {
+  })
+}
 
 export default defineComponent({
   components: {

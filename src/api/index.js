@@ -4,6 +4,9 @@ export default {
     UserRegister: (data) => {
         return request.post('/user/register', data)
     },
+    UserStatus: () => {
+        return request.get('/user/status')
+    },
     UserLogin: (data) => {
         return request.post('/user/login', data)
     },
