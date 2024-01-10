@@ -59,14 +59,22 @@
           :label-width="80"
           label-placement="left">
         <n-grid :cols="24">
-          <n-form-item-gi :span="24" label="选择代理">
+          <n-form-item-gi :span="12" label="选择代理">
             <n-select
-                v-model:value="selectedProxy"
+                v-model:value="formValue.proxyId"
                 placeholder="所有代理"
                 :options="proxyOptions"
                 @update:value="onProxyChange"
                 clearable/>
           </n-form-item-gi>
+          <n-form-item-gi :span="12" label="选择日期">
+            <n-date-picker
+                type="date"
+                placeholder="选择日期"
+                @update:value="onTimeChange"
+                clearable/>
+          </n-form-item-gi>
+
         </n-grid>
       </n-form>
 
@@ -87,6 +95,7 @@ import {use} from 'echarts/core';
 import {CanvasRenderer} from 'echarts/renderers';
 import {LineChart, PieChart} from 'echarts/charts';
 import {
+  DataZoomComponent,
   GridComponent,
   LegendComponent,
   TitleComponent,
@@ -108,7 +117,11 @@ const proxyStat = ref({
 let chartXAxisList = ref([])
 let chartSeriesList = ref([])
 
-const selectedProxy = ref(null)
+const formValue = ref({
+  proxyId: null,
+  date: null,
+})
+
 const proxyOptions = ref([])
 
 const chartOption = ref({
@@ -138,6 +151,7 @@ const chartOption = ref({
   ],
   yAxis: [{}],
   grid: [{}],
+  dataZoom: [{}],
   series: [
     {
       type: 'line',
@@ -195,12 +209,12 @@ const loadProxyStat = () => {
   })
 }
 
-const loadProxyRequestStat = (proxyId) => {
-  proxyId = parseInt(proxyId, 10)
+const loadProxyRequestStat = () => {
+  let proxyId = parseInt(formValue.value.proxyId, 10)
   if (isNaN(proxyId)) {
     proxyId = 0
   }
-  api.ProxyRequestStat(proxyId).then(resp => {
+  api.ProxyRequestStat(proxyId, {date: formValue.value.date}).then(resp => {
     if (!resp.data.data) {
       chartXAxisList.value = []
       chartSeriesList.value = []
@@ -218,7 +232,13 @@ const loadProxyRequestStat = (proxyId) => {
 }
 
 const onProxyChange = (value, option) => {
-  loadProxyRequestStat(value)
+  formValue.value.proxyId = value
+  loadProxyRequestStat()
+}
+
+const onTimeChange = (value, formattedValue) => {
+  formValue.value.date = formattedValue ?? null
+  loadProxyRequestStat()
 }
 
 const onBeforeMountHandler = () => {
@@ -240,6 +260,7 @@ export default defineComponent({
       TooltipComponent,
       LegendComponent,
       VisualMapComponent,
+      DataZoomComponent,
       GridComponent,
       LineChart,
     ])
@@ -248,9 +269,10 @@ export default defineComponent({
     return {
       proxyStat,
       chartOption,
-      selectedProxy,
+      formValue,
       proxyOptions,
       onProxyChange,
+      onTimeChange,
     }
   }
 })

@@ -28,8 +28,8 @@ export default {
     ProxyStat: () => {
         return request.get(`/user/proxy/stat`)
     },
-    ProxyRequestStat: (proxyId) => {
-        return request.get(`/proxy/${proxyId}/request/stat`)
+    ProxyRequestStat: (proxyId, params) => {
+        return request.get(`/proxy/${proxyId}/request/stat`, {params})
     },
     RefreshToken: (token) => {
         // params
