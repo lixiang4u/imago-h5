@@ -25,6 +25,9 @@ export default {
     ListProxyLog: (proxyId, params) => {
         return request.get(`/user/proxy/${proxyId}/logs`, {params})
     },
+    ProxyStat: () => {
+        return request.get(`/user/proxy/stat`)
+    },
     RefreshToken: (token) => {
         // params
         return request.get('/user/refresh-token', {config: {headers: {Authorization: ''}}})

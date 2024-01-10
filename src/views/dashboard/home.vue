@@ -2,14 +2,17 @@
   <div>
     <div class="m-card">
 
-      <div class="sub-cards">
+      <div class="sub-cards" v-if="proxyStat">
 
         <div class="sub-card">
           <div class="h">
             <span class="title">总代理数量</span>
             <span class="q"></span>
           </div>
-          <div class="v"><span class="value">12,862</span><span class="uint">个</span></div>
+          <div class="v">
+            <span class="value">{{ proxyStat.proxy_count }}</span>
+            <span class="uint">个</span>
+          </div>
           <div class="desc">所有代理配置数量</div>
         </div>
 
@@ -18,7 +21,10 @@
             <span class="title">总请求数</span>
             <span class="q"></span>
           </div>
-          <div class="v"><span class="value">12862</span><span class="uint">MB</span></div>
+          <div class="v">
+            <span class="value">{{ proxyStat.request_count }}</span>
+            <span class="uint">条</span>
+          </div>
           <div class="desc">所有有效请求数量</div>
         </div>
 
@@ -27,7 +33,10 @@
             <span class="title">总响应流量</span>
             <span class="q"></span>
           </div>
-          <div class="v"><span class="value">12,862</span><span class="uint">MB</span></div>
+          <div class="v">
+            <span class="value">{{ proxyStat.response_bytes }}</span>
+            <span class="uint">{{ proxyStat.response_unit }}</span>
+          </div>
           <div class="desc">所有有效请求返回的数据大小</div>
         </div>
 
@@ -36,7 +45,10 @@
             <span class="title">总节省流量</span>
             <span class="q"></span>
           </div>
-          <div class="v"><span class="value">12,862</span><span class="uint">MB</span></div>
+          <div class="v">
+            <span class="value">{{ proxyStat.saved_bytes }}</span>
+            <span class="uint">{{ proxyStat.saved_unit }}</span>
+          </div>
           <div class="desc">所有返回图片压缩后节约流量</div>
         </div>
       </div>
@@ -46,7 +58,64 @@
   </div>
 </template>
 
-<script setup></script>
+<script>
+import {defineComponent, onBeforeMount, ref} from "vue";
+import api from "@/api/index.js";
+import format from "@/utils/format.js";
+
+const proxyStat = ref(null)
+
+const handleProxyStateFormat = (data) => {
+  const r = {
+    proxy_count: data.proxy_count,
+    request_count: data.request_count,
+    response_bytes: 0,
+    saved_bytes: 0,
+    response_unit: '',
+    saved_unit: '',
+  }
+  const resp = format.formatBytes(data.response_bytes).split(' ')
+  const save = format.formatBytes(data.saved_bytes).split(' ')
+
+  console.log('[resp]', resp, resp.length)
+
+  if (resp.length === 2) {
+    r.response_bytes = resp[0]
+    r.response_unit = resp[1]
+  }
+  if (save.length === 2) {
+    r.saved_bytes = save[0]
+    r.saved_unit = save[1]
+  }
+
+  console.log('[r]', r)
+
+  return r
+}
+
+const loadProxyStat = () => {
+  api.ProxyStat().then(resp => {
+    console.log('[resp.data]', resp.data.data)
+    proxyStat.value = handleProxyStateFormat(resp.data.data)
+  }).catch(err => {
+    modalTipsRef.value.showError({'message': error.message ?? '系统错误'})
+  })
+}
+
+const onBeforeMountHandler = () => {
+  loadProxyStat()
+}
+
+export default defineComponent({
+  setup() {
+    onBeforeMount(onBeforeMountHandler)
+    return {
+      proxyStat,
+    }
+  }
+})
+
+</script>
 
 <style scoped>
 
