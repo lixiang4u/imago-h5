@@ -4,7 +4,7 @@
       <div class="logo">imago</div>
     </div>
     <div class="flex flex-row">
-      <div>@{{nickname}}</div>
+      <div>@{{ nickname }}</div>
       <span class="split">|</span>
       <div class="cursor" @click="onLogoutClick">退出</div>
     </div>
@@ -60,7 +60,7 @@ export default defineComponent({
     color: #c3c3c3;
   }
 
-  .cursor{
+  .cursor {
     cursor: pointer;
   }
 }
