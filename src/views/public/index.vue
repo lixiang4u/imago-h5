@@ -11,7 +11,7 @@
         <n-upload
             multiple
             directory-dnd
-            action="https://www.example.com/v2/5e4bafc63100007100d8b70f"
+            :action="uploadApi"
             :show-file-list="false"
             @finish="onUploadFinish"
             @beforeUpload="onBeforeUpload"
@@ -31,8 +31,17 @@
             </n-p>
           </n-upload-dragger>
         </n-upload>
-
         <div>上传结果：</div>
+        <div class="upload-list">
+          <n-flex v-for="uploadFile in uploadFiles" justify="space-between">
+            <div>
+              <n-image class="img" :src="previewImageFile(uploadFile.file)"/>
+            </div>
+            <div>
+              fffff
+            </div>
+          </n-flex>
+        </div>
 
       </div>
     </section>
@@ -40,32 +49,50 @@
 </template>
 
 <script>
-import {defineComponent} from "vue";
+import {defineComponent, ref} from "vue";
 import Header from "@/views/public/header.vue";
 import {CloudUploadFilled} from "@vicons/material";
 
-const onUploadFinish = (options) => {
-  console.log('[onUploadFinish]', options)
-}
+const uploadFiles = ref([])
 
 const onBeforeUpload = (options) => {
   console.log('[onBeforeUpload]', options)
+  const find = uploadFiles.value.find(item => {
+    return item.id === options.file.id
+  })
+  console.log('[=============>find]', find, uploadFiles.value)
+  if (!find) {
+    uploadFiles.value.push(options.file)
+  }
+
+}
+
+const onUploadFinish = (options) => {
+  console.log('[onUploadFinish]', options)
 }
 
 const onUploadError = (options) => {
   console.log('[onUploadError]', options)
 }
 
+const previewImageFile = (file) => {
+  return URL.createObjectURL(file);
+}
 
 export default defineComponent({
   components: {
     Header, CloudUploadFilled
   },
   setup() {
+    const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index`
+    console.log('[uploadApi]', uploadApi)
     return {
+      uploadApi,
       onUploadFinish,
       onBeforeUpload,
       onUploadError,
+      uploadFiles,
+      previewImageFile,
     }
   }
 })
@@ -90,6 +117,14 @@ export default defineComponent({
 
   .upload {
     margin: 80px 0 0 0;
+  }
+
+  .upload-list {
+  }
+
+  .upload-list .img {
+    width: 55px;
+    height: 55px;
   }
 
 }
