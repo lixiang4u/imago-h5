@@ -45,8 +45,11 @@
                 <div>34.4KB</div>
               </n-flex>
             </n-flex>
-            <n-flex class="summary-right">
-              XX
+            <n-flex class="summary-right" align="center">
+              <n-flex align="center">下载全部</n-flex>
+              <n-icon size="50" color="#18a058" class="cursor">
+                <CloudDownloadOutlined/>
+              </n-icon>
             </n-flex>
           </n-flex>
           <n-flex class="item-container">
@@ -197,9 +200,14 @@ export default defineComponent({
       height: 80px;
       border-radius: 8px;
 
+      .summary-right {
+        color: #2c3e50;
+      }
+
       .percent {
         font-size: 32px;
         line-height: 80px;
+        margin-right: 6px;
 
         .icon {
           line-height: 94px;
