@@ -31,15 +31,51 @@
             </n-p>
           </n-upload-dragger>
         </n-upload>
-        <div>上传结果：</div>
         <div class="upload-list">
-          <n-flex v-for="uploadFile in uploadFiles" justify="space-between">
-            <div>
-              <n-image class="img" :src="previewImageFile(uploadFile.file)"/>
-            </div>
-            <div>
-              fffff
-            </div>
+          <n-flex class="summary" justify="space-between">
+            <n-flex>
+              <n-flex class="percent">
+                <n-icon class="icon" color="green" size="48">
+                  <CheckRound/>
+                </n-icon>
+                19%
+              </n-flex>
+              <n-flex vertical justify="center" :size="[0,0]">
+                <div>当前处理5个文件，共节省流量：</div>
+                <div>34.4KB</div>
+              </n-flex>
+            </n-flex>
+            <n-flex class="summary-right">
+              XX
+            </n-flex>
+          </n-flex>
+          <n-flex class="item-container">
+            <n-flex class="item" v-for="uploadFile in uploadFiles" vertical>
+              <n-flex justify="space-between">
+                <n-flex>
+                  <n-image class="img" :src="previewImageFile(uploadFile.file)"/>
+                  <n-flex vertical :size="[0,0]" justify="center">
+                    <span class="file-name">{{ uploadFile.name }}</span>
+                    <span class="file-size">{{ format.formatBytes(uploadFile.file.size) }}</span>
+                  </n-flex>
+                </n-flex>
+                <n-flex style="align-content: space-around">
+                  <n-flex class="result" vertical :size="[0,0]" justify="center">
+                    <n-flex align="center" :size="[0,0]" class="file-percent-new">
+                      <n-icon :depth="1">
+                        <UnfoldLessRound/>
+                      </n-icon>
+                      <span>-60%</span>
+                    </n-flex>
+                    <div class="file-size-new">{{ format.formatBytes(uploadFile.file.size) }}</div>
+                  </n-flex>
+                  <n-icon size="50" color="#18a058" class="cursor">
+                    <CloudDownloadOutlined/>
+                  </n-icon>
+                </n-flex>
+              </n-flex>
+              <n-progress type="line" :show-indicator="false" status="success" :percentage="20"/>
+            </n-flex>
           </n-flex>
         </div>
 
@@ -49,11 +85,28 @@
 </template>
 
 <script>
-import {defineComponent, ref} from "vue";
+import {defineComponent, onBeforeMount, ref} from "vue";
 import Header from "@/views/public/header.vue";
-import {CloudUploadFilled} from "@vicons/material";
+import {CheckRound, CloudDownloadOutlined, CloudUploadFilled, FolderZipFilled, UnfoldLessRound} from "@vicons/material";
+import format from '@/utils/format.js'
+import localstorage from "@/utils/localstorage.js";
 
-const uploadFiles = ref([])
+const uploadFiles = ref([{
+  file: {
+    size: 122434,
+  },
+  name: 'xxxxx.png',
+}, {
+  file: {
+    size: 676577,
+  },
+  name: 'yyyyyyy.png',
+}, {
+  file: {
+    size: 6765546,
+  },
+  name: 'zzzzzzz.png',
+}])
 
 const onBeforeUpload = (options) => {
   console.log('[onBeforeUpload]', options)
@@ -76,16 +129,27 @@ const onUploadError = (options) => {
 }
 
 const previewImageFile = (file) => {
-  return URL.createObjectURL(file);
+  try {
+    return URL.createObjectURL(file);
+  } catch (e) {
+    return null
+  }
+}
+
+const onBeforeMountHandler = () => {
+  localstorage.get
 }
 
 export default defineComponent({
   components: {
-    Header, CloudUploadFilled
+    Header, CloudUploadFilled, CloudDownloadOutlined, UnfoldLessRound, FolderZipFilled, CheckRound
   },
   setup() {
     const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index`
     console.log('[uploadApi]', uploadApi)
+
+    onBeforeMount(onBeforeMountHandler)
+
     return {
       uploadApi,
       onUploadFinish,
@@ -93,6 +157,7 @@ export default defineComponent({
       onUploadError,
       uploadFiles,
       previewImageFile,
+      format,
     }
   }
 })
@@ -119,12 +184,76 @@ export default defineComponent({
     margin: 80px 0 0 0;
   }
 
-  .upload-list {
+  .cursor {
+    cursor: pointer;
   }
 
-  .upload-list .img {
-    width: 55px;
-    height: 55px;
+  .upload-list {
+    margin: 20px 0 0 0;
+
+    .summary {
+      background-color: #0080001f;
+      padding: 0 20px 0 20px;
+      height: 80px;
+      border-radius: 8px;
+
+      .percent {
+        font-size: 32px;
+        line-height: 80px;
+
+        .icon {
+          line-height: 94px;
+          //margin: 10px 0 0 0;
+        }
+      }
+    }
+
+    .item-container {
+      //margin: 10px 0 10px 0;
+      margin: 10px 0 10px 0;
+    }
+
+
+    .item {
+      padding: 10px 20px 10px 20px;
+      width: 100%;
+      border-radius: 8px;
+
+      .img {
+        width: 55px;
+        height: 55px;
+        border-radius: 5px;
+        border: 1px dashed #e0dfdf;
+      }
+
+      .file-name {
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .file-size {
+        color: rgb(118, 124, 130);;
+      }
+
+      .result {
+        width: 80px;
+        margin-right: 10px;
+
+        .file-percent-new {
+          font-size: 16px;
+          font-weight: bold;
+        }
+
+        .file-size-new {
+          color: rgb(118, 124, 130);;
+        }
+      }
+    }
+
+    .item:hover {
+      //background-color: #f8f8f8;
+      background-color: #0080001f;
+    }
   }
 
 }
