@@ -35,4 +35,7 @@ export default {
         // params
         return request.get('/user/refresh-token', {config: {headers: {Authorization: ''}}})
     },
+    FileZipArchive: (data) => {
+        return request.post('/archive/zip', data)
+    },
 }

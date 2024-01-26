@@ -16,6 +16,9 @@
             @finish="onUploadFinish"
             @beforeUpload="onBeforeUpload"
             @error="onUploadError"
+            response-type="json"
+            method="post"
+            :data="{quality:75, compression:9}"
             :max="10">
           <n-upload-dragger>
             <div style="margin-bottom: 12px">
@@ -31,23 +34,25 @@
             </n-p>
           </n-upload-dragger>
         </n-upload>
-        <div class="upload-list">
+        <div class="upload-list" v-if="uploadFiles.length > 0">
           <n-flex class="summary" justify="space-between">
             <n-flex>
               <n-flex class="percent">
                 <n-icon class="icon" color="green" size="48">
                   <CheckRound/>
                 </n-icon>
-                19%
+                {{ uploadSummary.shrinkPercent }}%
               </n-flex>
               <n-flex vertical justify="center" :size="[0,0]">
-                <div>当前处理5个文件，共节省流量：</div>
-                <div>34.4KB</div>
+                <div>当前处理 <b>{{ uploadSummary.fileCount }}</b> 个文件，共节省流量：</div>
+                <div>
+                  {{ format.formatBytes(uploadSummary.totalSize - uploadSummary.shrinkSize) }}
+                </div>
               </n-flex>
             </n-flex>
             <n-flex class="summary-right" align="center">
               <n-flex align="center">下载全部</n-flex>
-              <n-icon size="50" color="#18a058" class="cursor">
+              <n-icon size="50" color="#18a058" class="cursor" @click="downloadArchiveFile()">
                 <CloudDownloadOutlined/>
               </n-icon>
             </n-flex>
@@ -56,28 +61,46 @@
             <n-flex class="item" v-for="uploadFile in uploadFiles" vertical>
               <n-flex justify="space-between">
                 <n-flex>
-                  <n-image class="img" :src="previewImageFile(uploadFile.file)"/>
+                  <n-image class="img" :src="previewImageFile(uploadFile.file)" object-fit="cover" width="55"
+                           height="55"/>
                   <n-flex vertical :size="[0,0]" justify="center">
                     <span class="file-name">{{ uploadFile.name }}</span>
                     <span class="file-size">{{ format.formatBytes(uploadFile.file.size) }}</span>
                   </n-flex>
                 </n-flex>
                 <n-flex style="align-content: space-around">
-                  <n-flex class="result" vertical :size="[0,0]" justify="center">
-                    <n-flex align="center" :size="[0,0]" class="file-percent-new">
-                      <n-icon :depth="1">
-                        <UnfoldLessRound/>
-                      </n-icon>
-                      <span>-60%</span>
+                  <n-flex v-if="uploadFile.result.error" :size="[0,0]">
+                    <n-flex class="result" vertical :size="[0,0]" justify="center">
+                      <n-ellipsis>
+                        {{ uploadFile.result.error }}{{ uploadFile.result.error }}{{ uploadFile.result.error }}
+                      </n-ellipsis>
                     </n-flex>
-                    <div class="file-size-new">{{ format.formatBytes(uploadFile.file.size) }}</div>
+                    <n-icon size="50" color="#d03050">
+                      <ErrorOutlineOutlined/>
+                    </n-icon>
                   </n-flex>
-                  <n-icon size="50" color="#18a058" class="cursor">
-                    <CloudDownloadOutlined/>
-                  </n-icon>
+                  <n-flex v-else>
+                    <n-flex class="result" vertical :size="[0,0]" justify="center">
+                      <n-flex align="center" :size="[0,0]" class="file-percent-new">
+                        <n-icon :depth="1">
+                          <UnfoldLessRound/>
+                        </n-icon>
+                        <div v-if="uploadFile.result.rate>=100">+{{ uploadFile.result.rate }}%</div>
+                        <div v-else>-{{ +uploadFile.result.rate }}%</div>
+                      </n-flex>
+                      <div class="file-size-new">{{ format.formatBytes(uploadFile.result.size) }}</div>
+                    </n-flex>
+                    <n-icon size="50" color="#18a058" class="cursor"
+                            @click="downloadFile(uploadFile.result.url, uploadFile.name)">
+                      <CloudDownloadOutlined/>
+                    </n-icon>
+                  </n-flex>
                 </n-flex>
               </n-flex>
-              <n-progress type="line" :show-indicator="false" status="success" :percentage="20"/>
+              <n-progress type="line" :show-indicator="false" v-if="uploadFile.result.error" status="error"
+                          :percentage="uploadFile.percentage"/>
+              <n-progress type="line" :show-indicator="false" v-else status="success"
+                          :percentage="uploadFile.percentage"/>
             </n-flex>
           </n-flex>
         </div>
@@ -90,45 +113,74 @@
 <script>
 import {defineComponent, onBeforeMount, ref} from "vue";
 import Header from "@/views/public/header.vue";
-import {CheckRound, CloudDownloadOutlined, CloudUploadFilled, FolderZipFilled, UnfoldLessRound} from "@vicons/material";
+import {
+  CheckRound,
+  CloudDownloadOutlined,
+  CloudUploadFilled,
+  ErrorOutlineOutlined,
+  FolderZipFilled,
+  UnfoldLessRound
+} from "@vicons/material";
 import format from '@/utils/format.js'
-import localstorage from "@/utils/localstorage.js";
+import api from "@/api/index.js";
 
-const uploadFiles = ref([{
-  file: {
-    size: 122434,
-  },
-  name: 'xxxxx.png',
-}, {
-  file: {
-    size: 676577,
-  },
-  name: 'yyyyyyy.png',
-}, {
-  file: {
-    size: 6765546,
-  },
-  name: 'zzzzzzz.png',
-}])
+const uploadSummary = ref({
+  fileCount: 0,
+  totalSize: 0,
+  shrinkSize: 0,
+  shrinkPercent: 0,
+})
+const uploadFiles = ref([])
 
 const onBeforeUpload = (options) => {
   console.log('[onBeforeUpload]', options)
   const find = uploadFiles.value.find(item => {
     return item.id === options.file.id
   })
-  console.log('[=============>find]', find, uploadFiles.value)
   if (!find) {
+    uploadSummary.value.fileCount += 1
+    uploadSummary.value.totalSize += options.file.file.size
+    options.file.result = {}
     uploadFiles.value.push(options.file)
   }
+}
 
+const getUploadSummaryPercent = (uploadSummary) => {
+  const a = (100 * uploadSummary.shrinkSize / uploadSummary.totalSize).toFixed(1)
+  if (!a) {
+    return 0
+  }
+  return a
 }
 
 const onUploadFinish = (options) => {
-  console.log('[onUploadFinish]', options)
+  console.log('[onUploadFinish]', options, options.event.target.response)
+  uploadFiles.value = uploadFiles.value.map(item => {
+    if (item.id === options.file.id) {
+      item.percentage = options.file.percentage
+      item.status = options.file.status
+      item.result = options.event.target.response
+
+      uploadSummary.value.shrinkSize += item.result.size
+      uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
+    }
+    return item
+  })
 }
 
 const onUploadError = (options) => {
   console.log('[onUploadError]', options)
+  uploadFiles.value = uploadFiles.value.map(item => {
+    if (item.id === options.file.id) {
+      item.percentage = options.file.percentage
+      item.status = options.file.status
+      item.result = {}
+
+      uploadSummary.value.shrinkSize += 0
+      uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
+    }
+    return item
+  })
 }
 
 const previewImageFile = (file) => {
@@ -140,15 +192,37 @@ const previewImageFile = (file) => {
 }
 
 const onBeforeMountHandler = () => {
-  localstorage.get
+  // localstorage.get
+}
+
+const downloadFile = (url, filename) => {
+  window.open(`${url}?download&filename=${filename}`, '_blank')
+}
+
+const downloadArchiveFile = () => {
+  const files = uploadFiles.value.map(item => {
+    console.log('[item]', item)
+    const tmpResult = item.result ?? {}
+    return {
+      path: tmpResult.path,
+      name: item.name,
+    }
+  })
+
+  api.FileZipArchive({files: files}).then(resp => {
+    console.log('[FileZipArchiveOk]', resp)
+  }).catch(err => {
+    console.log('[FileZipArchiveErr]', err)
+  })
+
 }
 
 export default defineComponent({
   components: {
-    Header, CloudUploadFilled, CloudDownloadOutlined, UnfoldLessRound, FolderZipFilled, CheckRound
+    Header, CloudUploadFilled, CloudDownloadOutlined, UnfoldLessRound, FolderZipFilled, CheckRound, ErrorOutlineOutlined
   },
   setup() {
-    const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index`
+    const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index&quality=20`
     console.log('[uploadApi]', uploadApi)
 
     onBeforeMount(onBeforeMountHandler)
@@ -161,6 +235,9 @@ export default defineComponent({
       uploadFiles,
       previewImageFile,
       format,
+      uploadSummary,
+      downloadFile,
+      downloadArchiveFile,
     }
   }
 })
@@ -201,7 +278,7 @@ export default defineComponent({
       border-radius: 8px;
 
       .summary-right {
-        color: #2c3e50;
+        color: #566675;
       }
 
       .percent {
@@ -244,8 +321,9 @@ export default defineComponent({
       }
 
       .result {
-        width: 80px;
-        margin-right: 10px;
+        width: 200px;
+        margin-right: 16px;
+        align-items: end;
 
         .file-percent-new {
           font-size: 16px;

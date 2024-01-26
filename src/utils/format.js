@@ -9,8 +9,14 @@ const formatToUnixTime = (dateTime) => {
 }
 
 const formatBytes = (bytes) => {
+    if (!bytes) {
+        return '0 B'
+    }
+    if (bytes < 0) {
+        return '+' + formatBytes(Math.abs(bytes))
+    }
     if (bytes < 1024) {
-        return bytes + ' bytes';
+        return bytes + ' B';
     } else if (bytes < 1024 * 1024) {
         return (bytes / 1024).toFixed(2) + ' KB';
     } else if (bytes < 1024 * 1024 * 1024) {
