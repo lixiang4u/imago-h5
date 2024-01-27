@@ -109,6 +109,7 @@
     </section>
 
     <ModalWaitingComponent ref="refModalWaiting"/>
+    <ModalTipsComponent ref="refModalTips"/>
   </div>
 </template>
 
@@ -116,6 +117,7 @@
 import {defineComponent, onBeforeMount, ref} from "vue";
 import Header from "@/views/public/header.vue";
 import ModalWaitingComponent from "@/components/ModalWaitingComponent.vue";
+import ModalTipsComponent from "@/components/ModalTipsComponent.vue";
 
 import {
   CheckRound,
@@ -129,6 +131,7 @@ import format from '@/utils/format.js'
 import api from "@/api/index.js";
 
 const refModalWaiting = ref(null)
+const refModalTips = ref(null)
 const uploadSummary = ref({
   fileCount: 0,
   totalSize: 0,
@@ -202,14 +205,24 @@ const downloadFile = (url, filename) => {
 }
 
 const downloadArchiveFile = () => {
-  refModalWaiting.value.showModal()
+  let fileCount = 0
   const files = uploadFiles.value.map(item => {
+    if (item.result && item.result.path) {
+      fileCount++
+    }
     const tmpResult = item.result ?? {}
     return {
       path: tmpResult.path,
       name: item.name,
     }
   })
+  if (fileCount <= 0) {
+    refModalTips.value.showError({'message': '没有可用文件'})
+    refModalWaiting.value.closeModal()
+    return
+  }
+
+  refModalWaiting.value.showModal()
 
   api.FileZipArchive({files: files}, {responseType: 'blob'}).then(resp => {
     try {
@@ -244,6 +257,7 @@ export default defineComponent({
     FolderZipFilled, CheckRound,
     ErrorOutlineOutlined,
     ModalWaitingComponent,
+    ModalTipsComponent,
   },
   setup() {
     const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index&quality=20`
@@ -262,6 +276,7 @@ export default defineComponent({
       downloadFile,
       downloadArchiveFile,
       refModalWaiting,
+      refModalTips,
     }
   }
 })
