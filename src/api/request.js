@@ -17,8 +17,13 @@ request.interceptors.request.use(value => {
 
 
 request.interceptors.response.use(resp => {
-    if (resp.data.code === 200) {
-        return resp
+    if (resp.status === 200) {
+        if (resp.data.code === 200) {
+            return resp
+        }
+        if (resp.data instanceof Blob) {
+            return resp
+        }
     }
     // 兼容默认错误
     const d = {message: resp.data.msg ?? null, debug: resp}

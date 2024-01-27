@@ -201,7 +201,6 @@ const downloadFile = (url, filename) => {
 
 const downloadArchiveFile = () => {
   const files = uploadFiles.value.map(item => {
-    console.log('[item]', item)
     const tmpResult = item.result ?? {}
     return {
       path: tmpResult.path,
@@ -209,8 +208,27 @@ const downloadArchiveFile = () => {
     }
   })
 
-  api.FileZipArchive({files: files}).then(resp => {
-    console.log('[FileZipArchiveOk]', resp)
+  api.FileZipArchive({files: files}, {responseType: 'blob'}).then(resp => {
+    try {
+      // 获取文件名
+      let filename = resp.headers.get('Content-Disposition').split('filename=')[1];
+      filename = filename.trim().replace(/["']/g, ''); // 去除引号
+
+      console.log('[Content-Disposition]', resp.headers.get('Content-Disposition'))
+      console.log('[filename]', filename)
+
+      let url = window.URL.createObjectURL(resp.data)
+      let eLink = document.createElement('a')
+      eLink.href = url
+      eLink.setAttribute('download', filename)
+      document.body.appendChild(eLink)
+      eLink.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(eLink)
+    } catch (e) {
+      console.log('[FileZipArchiveError]', e)
+    }
+
   }).catch(err => {
     console.log('[FileZipArchiveErr]', err)
   })
