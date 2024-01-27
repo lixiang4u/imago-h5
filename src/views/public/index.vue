@@ -107,12 +107,16 @@
 
       </div>
     </section>
+
+    <ModalWaitingComponent ref="refModalWaiting"/>
   </div>
 </template>
 
 <script>
 import {defineComponent, onBeforeMount, ref} from "vue";
 import Header from "@/views/public/header.vue";
+import ModalWaitingComponent from "@/components/ModalWaitingComponent.vue";
+
 import {
   CheckRound,
   CloudDownloadOutlined,
@@ -124,6 +128,7 @@ import {
 import format from '@/utils/format.js'
 import api from "@/api/index.js";
 
+const refModalWaiting = ref(null)
 const uploadSummary = ref({
   fileCount: 0,
   totalSize: 0,
@@ -133,7 +138,6 @@ const uploadSummary = ref({
 const uploadFiles = ref([])
 
 const onBeforeUpload = (options) => {
-  console.log('[onBeforeUpload]', options)
   const find = uploadFiles.value.find(item => {
     return item.id === options.file.id
   })
@@ -154,7 +158,6 @@ const getUploadSummaryPercent = (uploadSummary) => {
 }
 
 const onUploadFinish = (options) => {
-  console.log('[onUploadFinish]', options, options.event.target.response)
   uploadFiles.value = uploadFiles.value.map(item => {
     if (item.id === options.file.id) {
       item.percentage = options.file.percentage
@@ -169,7 +172,6 @@ const onUploadFinish = (options) => {
 }
 
 const onUploadError = (options) => {
-  console.log('[onUploadError]', options)
   uploadFiles.value = uploadFiles.value.map(item => {
     if (item.id === options.file.id) {
       item.percentage = options.file.percentage
@@ -200,6 +202,7 @@ const downloadFile = (url, filename) => {
 }
 
 const downloadArchiveFile = () => {
+  refModalWaiting.value.showModal()
   const files = uploadFiles.value.map(item => {
     const tmpResult = item.result ?? {}
     return {
@@ -213,9 +216,6 @@ const downloadArchiveFile = () => {
       // 获取文件名
       let filename = resp.headers.get('Content-Disposition').split('filename=')[1];
       filename = filename.trim().replace(/["']/g, ''); // 去除引号
-
-      console.log('[Content-Disposition]', resp.headers.get('Content-Disposition'))
-      console.log('[filename]', filename)
 
       let url = window.URL.createObjectURL(resp.data)
       let eLink = document.createElement('a')
@@ -231,17 +231,22 @@ const downloadArchiveFile = () => {
 
   }).catch(err => {
     console.log('[FileZipArchiveErr]', err)
+  }).finally(() => {
+    refModalWaiting.value.closeModal()
   })
 
 }
 
 export default defineComponent({
   components: {
-    Header, CloudUploadFilled, CloudDownloadOutlined, UnfoldLessRound, FolderZipFilled, CheckRound, ErrorOutlineOutlined
+    Header, CloudUploadFilled,
+    CloudDownloadOutlined, UnfoldLessRound,
+    FolderZipFilled, CheckRound,
+    ErrorOutlineOutlined,
+    ModalWaitingComponent,
   },
   setup() {
     const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index&quality=20`
-    console.log('[uploadApi]', uploadApi)
 
     onBeforeMount(onBeforeMountHandler)
 
@@ -256,6 +261,7 @@ export default defineComponent({
       uploadSummary,
       downloadFile,
       downloadArchiveFile,
+      refModalWaiting,
     }
   }
 })
