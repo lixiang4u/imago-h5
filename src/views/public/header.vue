@@ -5,31 +5,43 @@
         <div class="logo">imago</div>
       </div>
       <div class="flex flex-row">
-        <div class="cursor">关于</div>
+        <div class="cursor" v-if="loginUsername" @click="router.push(`/home?from=index`)">{{ loginUsername }}</div>
+        <div class="cursor" v-else @click="router.push(`/login?from=index`)">登录/注册</div>
         <span class="split">|</span>
-        <div class="cursor" @click="goLogin">登录</div>
+        <div class="cursor">关于</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import {defineComponent} from "vue";
+import {defineComponent, onBeforeMount, onBeforeUpdate, ref} from "vue";
 import {useRouter} from "vue-router";
+import localstorage from "@/utils/localstorage.js";
 
 let router = null
+const loginUsername = ref(null)
 
-const goLogin = () => {
-  console.log('CCC')
-  router.push(`/login?from=index`)
+const onBeforeUpdateHandler = () => {
+  console.log('[onBeforeUpdateHandler::Header]')
+  loginUsername.value = localstorage.getNickname()
+}
+
+const onBeforeMountHandler = () => {
+  console.log('[onBeforeUpdateHandler::Header]')
+  loginUsername.value = localstorage.getNickname()
 }
 
 export default defineComponent({
   setup() {
     router = useRouter()
 
+    onBeforeUpdate(onBeforeUpdateHandler)
+    onBeforeMount(onBeforeMountHandler)
+
     return {
-      goLogin,
+      router,
+      loginUsername,
     }
   }
 })

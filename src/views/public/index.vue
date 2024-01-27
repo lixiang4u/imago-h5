@@ -19,6 +19,7 @@
             response-type="json"
             method="post"
             :data="{quality:75, compression:9}"
+            :headers="uploadRequestHeaders"
             :max="10">
           <n-upload-dragger>
             <div style="margin-bottom: 12px">
@@ -129,6 +130,7 @@ import {
 } from "@vicons/material";
 import format from '@/utils/format.js'
 import api from "@/api/index.js";
+import localstorage from "@/utils/localstorage.js";
 
 const refModalWaiting = ref(null)
 const refModalTips = ref(null)
@@ -197,7 +199,6 @@ const previewImageFile = (file) => {
 }
 
 const onBeforeMountHandler = () => {
-  // localstorage.get
 }
 
 const downloadFile = (url, filename) => {
@@ -250,6 +251,10 @@ const downloadArchiveFile = () => {
 
 }
 
+const uploadRequestHeaders = ref({
+  Authorization: 'Bearer ' + localstorage.getAccessToken()
+})
+
 export default defineComponent({
   components: {
     Header, CloudUploadFilled,
@@ -277,6 +282,7 @@ export default defineComponent({
       downloadArchiveFile,
       refModalWaiting,
       refModalTips,
+      uploadRequestHeaders,
     }
   }
 })

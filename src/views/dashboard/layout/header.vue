@@ -1,7 +1,7 @@
 <template>
   <div class="h flex flex-row">
     <div class="flex flex-row">
-      <div class="logo">imago</div>
+      <div class="logo cursor" @click="router.push('/?from=dashboard')">imago</div>
     </div>
     <div class="flex flex-row">
       <div>@{{ nickname }}</div>
@@ -29,6 +29,7 @@ export default defineComponent({
     router = useRouter()
     return {
       nickname,
+      router,
       onLogoutClick,
     }
   }

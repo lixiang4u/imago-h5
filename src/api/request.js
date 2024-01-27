@@ -1,5 +1,5 @@
 import axios from "axios";
-import localStorage from '@/utils/localstorage.js'
+import localstorage from "@/utils/localstorage.js";
 
 const request = axios.create({
     baseURL: import.meta.env.VITE_BASE_URL,
@@ -8,7 +8,7 @@ const request = axios.create({
 
 request.interceptors.request.use(value => {
     if (!value.headers['Authorization']) {
-        value.headers['Authorization'] = 'Bearer ' + localStorage.getAccessToken()
+        value.headers['Authorization'] = 'Bearer ' + localstorage.getAccessToken()
     }
     return value
 }, error => {
@@ -35,6 +35,7 @@ request.interceptors.response.use(resp => {
         return Promise.reject(d)
     }
     if (error.response.status === 401) {
+        localstorage.clear()
         const d = {message: '登录已过期，请重新登录', debug: error}
         return Promise.reject(d)
     } else {
