@@ -38,4 +38,7 @@ export default {
     FileZipArchive: (data, config) => {
         return request.post('/archive/zip', data, config)
     },
+    CompressProcess: (data) => {
+        return request.post('/process', data)
+    },
 }

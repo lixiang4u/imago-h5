@@ -53,15 +53,20 @@
           </n-flex>
         </n-flex>
 
-        <div class="upload-list" v-if="uploadFiles.length > 0">
+        <div class="upload-list" v-if="processFiles.length > 0">
           <n-flex class="summary" justify="space-between">
             <n-flex>
-              <n-flex class="percent">
-                <n-icon class="icon" color="green" size="48">
-                  <CheckRound/>
-                </n-icon>
-                {{ uploadSummary.shrinkPercent }}%
-              </n-flex>
+              <n-tooltip trigger="hover">
+                <template #trigger>
+                  <n-flex class="percent">
+                    <n-icon class="icon" color="green" size="48">
+                      <CheckRound/>
+                    </n-icon>
+                    {{ uploadSummary.shrinkPercent }}%
+                  </n-flex>
+                </template>
+                压缩率：（压缩后文件大小 / 源文件大小）* 100
+              </n-tooltip>
               <n-flex vertical justify="center" :size="[0,0]">
                 <div>当前处理 <b>{{ uploadSummary.fileCount }}</b> 个文件，共节省流量：</div>
                 <div>
@@ -77,7 +82,7 @@
             </n-flex>
           </n-flex>
           <n-flex class="item-container">
-            <n-flex class="item" v-for="uploadFile in uploadFiles" vertical>
+            <n-flex class="item" v-for="uploadFile in processFiles" vertical>
               <n-flex justify="space-between">
                 <n-flex>
                   <n-image class="img" :src="previewImageFile(uploadFile.file)" object-fit="cover" width="55"
@@ -104,7 +109,7 @@
                         <n-icon :depth="1">
                           <UnfoldLessRound/>
                         </n-icon>
-                        <div v-if="uploadFile.result.rate>=100">+{{ uploadFile.result.rate }}%</div>
+                        <div v-if="uploadFile.result.rate>=100">+{{ 100 - uploadFile.result.rate }}%</div>
                         <div v-else>-{{ +uploadFile.result.rate }}%</div>
                       </n-flex>
                       <div class="file-size-new">{{ format.formatBytes(uploadFile.result.size) }}</div>
@@ -166,18 +171,9 @@ const optionTypes = ref([
   {name: 'JPG', value: 'jpg', checked: false},
   {name: 'PNG', value: 'png', checked: false}
 ])
-const uploadFiles = ref([])
+const processFiles = ref([])
 
 const onBeforeUpload = (options) => {
-  const find = uploadFiles.value.find(item => {
-    return item.id === options.file.id
-  })
-  if (!find) {
-    uploadSummary.value.fileCount += 1
-    uploadSummary.value.totalSize += options.file.file.size
-    options.file.result = {}
-    uploadFiles.value.push(options.file)
-  }
 }
 
 const getUploadSummaryPercent = (uploadSummary) => {
@@ -189,31 +185,55 @@ const getUploadSummaryPercent = (uploadSummary) => {
 }
 
 const onUploadFinish = (options) => {
-  uploadFiles.value = uploadFiles.value.map(item => {
-    if (item.id === options.file.id) {
-      item.percentage = options.file.percentage
-      item.status = options.file.status
-      item.result = options.event.target.response
-
-      uploadSummary.value.shrinkSize += item.result.size
-      uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
+  const file = options.file
+  const resp = options.event.target.response
+  if (!resp || resp.code !== 200 || !resp.data.path) {
+    return
+  }
+  optionTypes.value.forEach(item => {
+    if (!item.checked) {
+      return
     }
-    return item
+    // 添加处理文件
+    file.result = {}
+    processFiles.value.push(file)
+    // 更新全局统计
+    uploadSummary.value.fileCount += 1
+    uploadSummary.value.totalSize += file.file.size
+    // 循环处理
+    api.CompressProcess({path: resp.data.path}).then(resp => {
+      console.log('[api.CompressProcessResp]', resp)
+      // 更新处理结果（成功）
+      processFiles.value = processFiles.value.map(item => {
+        if (item.id === file.id) {
+          item.percentage = file.percentage
+          item.status = file.status
+          item.result = resp.data.data
+
+          uploadSummary.value.shrinkSize += item.result.size
+          uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
+        }
+        return item
+      })
+    }).catch(err => {
+      console.log('[api.CompressProcessError]', err)
+      // 更新处理结果（失败）
+      processFiles.value = processFiles.value.map(item => {
+        if (item.id === file.id) {
+          item.percentage = file.percentage
+          item.status = file.status
+          item.result = {}
+
+          uploadSummary.value.shrinkSize += 0
+          uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
+        }
+        return item
+      })
+    })
   })
 }
 
 const onUploadError = (options) => {
-  uploadFiles.value = uploadFiles.value.map(item => {
-    if (item.id === options.file.id) {
-      item.percentage = options.file.percentage
-      item.status = options.file.status
-      item.result = {}
-
-      uploadSummary.value.shrinkSize += 0
-      uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
-    }
-    return item
-  })
 }
 
 const previewImageFile = (file) => {
@@ -233,7 +253,7 @@ const downloadFile = (url, filename) => {
 
 const downloadArchiveFile = () => {
   let fileCount = 0
-  const files = uploadFiles.value.map(item => {
+  const files = processFiles.value.map(item => {
     if (item.result && item.result.path) {
       fileCount++
     }
@@ -302,7 +322,7 @@ export default defineComponent({
     RadioButtonUncheckedRound,
   },
   setup() {
-    const uploadApi = `${import.meta.env.VITE_BASE_URL}/process?from=web_index`
+    const uploadApi = `${import.meta.env.VITE_BASE_URL}/upload?from=web_index`
 
     onBeforeMount(onBeforeMountHandler)
 
@@ -311,7 +331,7 @@ export default defineComponent({
       onUploadFinish,
       onBeforeUpload,
       onUploadError,
-      uploadFiles,
+      processFiles,
       previewImageFile,
       format,
       uploadSummary,
