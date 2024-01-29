@@ -35,6 +35,24 @@
             </n-p>
           </n-upload-dragger>
         </n-upload>
+
+        <n-flex class="options-container" align="center">
+          <n-flex>转换格式：</n-flex>
+          <n-flex class="options" justify="flex-end">
+            <n-tag class="cursor" round :bordered="false" v-for="option in optionTypes"
+                   :type="option.checked?'success':''"
+                   @click="onTypeOptionCheck(option)">
+              {{ option.name }}
+              <template #icon>
+                <n-icon>
+                  <CheckCircleRound v-if="option.checked"/>
+                  <RadioButtonUncheckedRound v-else/>
+                </n-icon>
+              </template>
+            </n-tag>
+          </n-flex>
+        </n-flex>
+
         <div class="upload-list" v-if="uploadFiles.length > 0">
           <n-flex class="summary" justify="space-between">
             <n-flex>
@@ -73,7 +91,7 @@
                   <n-flex v-if="uploadFile.result.error" :size="[0,0]">
                     <n-flex class="result" vertical :size="[0,0]" justify="center">
                       <n-ellipsis>
-                        {{ uploadFile.result.error }}{{ uploadFile.result.error }}{{ uploadFile.result.error }}
+                        {{ uploadFile.result.error }}
                       </n-ellipsis>
                     </n-flex>
                     <n-icon size="50" color="#d03050">
@@ -121,12 +139,14 @@ import ModalWaitingComponent from "@/components/ModalWaitingComponent.vue";
 import ModalTipsComponent from "@/components/ModalTipsComponent.vue";
 
 import {
+  CheckCircleRound,
   CheckRound,
   CloudDownloadOutlined,
   CloudUploadFilled,
   ErrorOutlineOutlined,
   FolderZipFilled,
-  UnfoldLessRound
+  RadioButtonUncheckedRound,
+  UnfoldLessRound,
 } from "@vicons/material";
 import format from '@/utils/format.js'
 import api from "@/api/index.js";
@@ -140,6 +160,12 @@ const uploadSummary = ref({
   shrinkSize: 0,
   shrinkPercent: 0,
 })
+const optionTypes = ref([
+  {name: 'RAW', value: 'raw', checked: true},
+  {name: 'WEBP', value: 'webp', checked: false},
+  {name: 'JPG', value: 'jpg', checked: false},
+  {name: 'PNG', value: 'png', checked: false}
+])
 const uploadFiles = ref([])
 
 const onBeforeUpload = (options) => {
@@ -255,6 +281,15 @@ const uploadRequestHeaders = ref({
   Authorization: 'Bearer ' + localstorage.getAccessToken()
 })
 
+const onTypeOptionCheck = (option) => {
+  optionTypes.value.map(item => {
+    if (option && option.value === item.value) {
+      item.checked = !item.checked
+    }
+    return item
+  })
+}
+
 export default defineComponent({
   components: {
     Header, CloudUploadFilled,
@@ -263,9 +298,11 @@ export default defineComponent({
     ErrorOutlineOutlined,
     ModalWaitingComponent,
     ModalTipsComponent,
+    CheckCircleRound,
+    RadioButtonUncheckedRound,
   },
   setup() {
-    const uploadApi = `${import.meta.env.VITE_BASE_URL}/shrink?from=web_index&quality=20`
+    const uploadApi = `${import.meta.env.VITE_BASE_URL}/process?from=web_index`
 
     onBeforeMount(onBeforeMountHandler)
 
@@ -283,6 +320,8 @@ export default defineComponent({
       refModalWaiting,
       refModalTips,
       uploadRequestHeaders,
+      optionTypes,
+      onTypeOptionCheck,
     }
   }
 })
@@ -312,6 +351,14 @@ export default defineComponent({
   .cursor {
     cursor: pointer;
   }
+
+  .options-container {
+    margin: 20px 0 10px 0;
+
+    .options {
+    }
+  }
+
 
   .upload-list {
     margin: 20px 0 0 0;

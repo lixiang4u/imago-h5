@@ -23,12 +23,10 @@ let router = null
 const loginUsername = ref(null)
 
 const onBeforeUpdateHandler = () => {
-  console.log('[onBeforeUpdateHandler::Header]')
   loginUsername.value = localstorage.getNickname()
 }
 
 const onBeforeMountHandler = () => {
-  console.log('[onBeforeUpdateHandler::Header]')
   loginUsername.value = localstorage.getNickname()
 }
 
