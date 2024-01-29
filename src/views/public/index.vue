@@ -114,10 +114,13 @@
                       </n-flex>
                       <div class="file-size-new">{{ format.formatBytes(uploadFile.result.size) }}</div>
                     </n-flex>
-                    <n-icon size="50" color="#18a058" class="cursor"
-                            @click="downloadFile(uploadFile.result.url, uploadFile.name)">
-                      <CloudDownloadOutlined/>
-                    </n-icon>
+                    <n-flex vertical :size="[0,0]" justify="center" align="center">
+                      <n-icon size="36" color="#18a058" class="cursor"
+                              @click="downloadFile(uploadFile.result.url, uploadFile.name)">
+                        <CloudDownloadOutlined/>
+                      </n-icon>
+                      <b>{{ uploadFile.destOption.name || '' }}</b>
+                    </n-flex>
                   </n-flex>
                 </n-flex>
               </n-flex>
@@ -195,19 +198,20 @@ const onUploadFinish = (options) => {
       return
     }
     // 添加处理文件
-    file.result = {}
-    processFiles.value.push(file)
+    let tmpFile = Object.assign({}, options.file, {result: {}, destOption: item,})
+    tmpFile.id = `${tmpFile.id}_${item.value}`
+    processFiles.value.push(tmpFile)
     // 更新全局统计
     uploadSummary.value.fileCount += 1
-    uploadSummary.value.totalSize += file.file.size
+    uploadSummary.value.totalSize += tmpFile.file.size
     // 循环处理
-    api.CompressProcess({path: resp.data.path}).then(resp => {
+    api.CompressProcess({src: resp.data.path, format: item.value}).then(resp => {
       console.log('[api.CompressProcessResp]', resp)
       // 更新处理结果（成功）
       processFiles.value = processFiles.value.map(item => {
-        if (item.id === file.id) {
-          item.percentage = file.percentage
-          item.status = file.status
+        if (item.id === tmpFile.id) {
+          item.percentage = tmpFile.percentage
+          item.status = tmpFile.status
           item.result = resp.data.data
 
           uploadSummary.value.shrinkSize += item.result.size
@@ -219,9 +223,9 @@ const onUploadFinish = (options) => {
       console.log('[api.CompressProcessError]', err)
       // 更新处理结果（失败）
       processFiles.value = processFiles.value.map(item => {
-        if (item.id === file.id) {
-          item.percentage = file.percentage
-          item.status = file.status
+        if (item.id === tmpFile.id) {
+          item.percentage = tmpFile.percentage
+          item.status = tmpFile.status
           item.result = {}
 
           uploadSummary.value.shrinkSize += 0
