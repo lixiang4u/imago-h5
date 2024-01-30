@@ -174,9 +174,11 @@ const optionTypes = ref([
   {name: 'JPG', value: 'jpg', checked: false},
   {name: 'PNG', value: 'png', checked: false}
 ])
+const uploadedFiles = ref([])
 const processFiles = ref([])
 
 const onBeforeUpload = (options) => {
+  refModalWaiting.value.showModal()
 }
 
 const getUploadSummaryPercent = (uploadSummary) => {
@@ -188,11 +190,16 @@ const getUploadSummaryPercent = (uploadSummary) => {
 }
 
 const onUploadFinish = (options) => {
+  refModalWaiting.value.closeModal()
+
   const file = options.file
   const resp = options.event.target.response
   if (!resp || resp.code !== 200 || !resp.data.path) {
     return
   }
+
+  uploadedFiles.value.push(options.file)
+
   optionTypes.value.forEach(item => {
     if (!item.checked) {
       return
@@ -238,6 +245,7 @@ const onUploadFinish = (options) => {
 }
 
 const onUploadError = (options) => {
+  refModalWaiting.value.closeModal()
 }
 
 const previewImageFile = (file) => {
@@ -353,9 +361,9 @@ export default defineComponent({
 
 <style scoped>
 .c {
-  width: 900px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 120px;
+  padding: 120px 0 120px 0;
 
   .h1 {
     font-size: 48px;
