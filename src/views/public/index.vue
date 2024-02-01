@@ -412,13 +412,11 @@ export default defineComponent({
 
         .icon {
           line-height: 94px;
-          //margin: 10px 0 0 0;
         }
       }
     }
 
     .item-container {
-      //margin: 10px 0 10px 0;
       margin: 10px 0 10px 0;
     }
 
@@ -461,7 +459,6 @@ export default defineComponent({
     }
 
     .item:hover {
-      //background-color: #f8f8f8;
       background-color: #0080001f;
     }
   }
