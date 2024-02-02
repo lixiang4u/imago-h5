@@ -55,7 +55,7 @@
 
         <div class="upload-list" v-if="processFiles.length > 0">
           <n-flex class="summary" justify="space-between" :size="[0,0]">
-            <n-flex>
+            <n-flex :size="[5,0]">
               <n-tooltip trigger="hover">
                 <template #trigger>
                   <n-flex class="percent" :size="[0,0]">
@@ -74,7 +74,7 @@
                 </div>
               </n-flex>
             </n-flex>
-            <n-flex class="summary-right" align="center">
+            <n-flex class="summary-right" align="center" :size="[6,0]">
               <n-flex align="center">下载全部</n-flex>
               <n-icon size="40" color="#18a058" class="cursor" @click="downloadArchiveFile()">
                 <CloudDownloadOutlined/>
@@ -85,7 +85,7 @@
             <n-flex class="item" v-for="uploadFile in processFiles" vertical :size="[0,0]">
               <n-flex justify="space-between" :size="[0,0]">
                 <n-flex justify="space-between" align="center" class="w100">
-                  <span class="file-name">{{ uploadFile.name }}{{ uploadFile.name }}{{ uploadFile.name }}</span>
+                  <span class="file-name">{{ uploadFile.name }}</span>
                   <span class="file-size">{{ format.formatBytes(uploadFile.file.size) }}</span>
                 </n-flex>
                 <n-flex style="width: 100%;" justify="flex-end">
@@ -244,6 +244,7 @@ const onUploadFinish = (options) => {
 
 const onUploadError = (options) => {
   refModalWaiting.value.closeModal()
+  refModalTips.value.showError({'message': '系统内部错误'})
 }
 
 const previewImageFile = (file) => {

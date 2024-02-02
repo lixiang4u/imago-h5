@@ -248,6 +248,7 @@ const onUploadFinish = (options) => {
 
 const onUploadError = (options) => {
   refModalWaiting.value.closeModal()
+  refModalTips.value.showError({'message': '系统内部错误'})
 }
 
 const previewImageFile = (file) => {
