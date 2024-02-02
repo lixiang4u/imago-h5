@@ -35,12 +35,14 @@ import Sidebar from './sidebar.vue'
   .sidebar {
     display: flex;
     width: 223px; /** bug **/
+    min-width: 100px;
     height: 100%;
   }
 
   .main {
     background-color: #f9fafb;
     width: 100%;
+    min-width: 780px;
 
     overflow: auto;
   }
