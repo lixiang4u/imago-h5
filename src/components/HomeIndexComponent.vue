@@ -277,10 +277,16 @@ const downloadArchiveFile = () => {
     if (item.result && item.result.path) {
       fileCount++
     }
+
+    let filename = item.name
+    if (item.destOption.value !== 'raw') {
+      filename = `${item.name}.${item.destOption.value}`
+    }
+
     const tmpResult = item.result ?? {}
     return {
       path: tmpResult.path,
-      name: item.name,
+      name: filename,
     }
   })
   if (fileCount <= 0) {
