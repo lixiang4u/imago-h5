@@ -112,7 +112,7 @@
                     </n-flex>
                     <n-flex vertical :size="[0,0]" justify="center" align="center">
                       <n-icon size="36" color="#18a058" class="cursor"
-                              @click="downloadFile(uploadFile.result.url, uploadFile.name)">
+                              @click="downloadFile(uploadFile)">
                         <CloudDownloadOutlined/>
                       </n-icon>
                       <b>{{ uploadFile.destOption.name || '' }}</b>
@@ -258,7 +258,12 @@ const onBeforeMountHandler = () => {
   console.log('[isMobile]', isMobile)
 }
 
-const downloadFile = (url, filename) => {
+const downloadFile = (uploadFile) => {
+  const url = uploadFile.result.url
+  let filename = uploadFile.name
+  if (uploadFile.destOption.value !== 'raw') {
+    filename = `${uploadFile.name}.${uploadFile.destOption.value}`
+  }
   window.open(`${url}?download&filename=${filename}`, '_blank')
 }
 
