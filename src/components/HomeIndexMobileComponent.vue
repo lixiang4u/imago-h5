@@ -105,8 +105,7 @@
                         <n-icon :depth="1">
                           <UnfoldLessRound/>
                         </n-icon>
-                        <div v-if="uploadFile.result.rate>=100">+{{ 100 - uploadFile.result.rate }}%</div>
-                        <div v-else>-{{ +uploadFile.result.rate }}%</div>
+                        <div>{{ uploadFile.result.percent_txt }}%</div>
                       </n-flex>
                       <div class="file-size-new">{{ format.formatBytes(uploadFile.result.size) }}</div>
                     </n-flex>
@@ -218,6 +217,12 @@ const onUploadFinish = (options) => {
           item.percentage = tmpFile.percentage
           item.status = tmpFile.status
           item.result = resp.data.data
+          if (item.result.rate >= 100) {
+            // 超原始大小了
+            item.result.percent_txt = '+' + Math.abs(parseFloat((100 - item.result.rate).toFixed(2)))
+          } else {
+            item.result.percent_txt = '-' + Math.abs(parseFloat(parseFloat(item.result.rate).toFixed(2)))
+          }
 
           uploadSummary.value.shrinkSize += item.result.size
           uploadSummary.value.shrinkPercent = getUploadSummaryPercent(uploadSummary.value)
